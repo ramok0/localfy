@@ -83,7 +83,10 @@ impl PlayerImpl {
     }
 
     pub fn play(&self) {
-        self.media_player.play().unwrap();
+        if self.has_media() {
+            //TODO: add error handling
+            let _result = self.media_player.play();
+        }
     }
 
     pub fn pause(&self) {
@@ -96,6 +99,10 @@ impl PlayerImpl {
 
     pub fn set_position(&self, position:f32) {
         self.media_player.set_position(position);
+    }
+
+    pub fn has_media(&self) -> bool {
+        self.media_player.get_media().is_some()
     }
 
     pub fn get_position(&self) -> Option<f32> {
@@ -119,7 +126,7 @@ impl PlayerImpl {
     }
 
     pub fn set_volume(&self, volume:i32) {
-        self.media_player.set_volume(volume);
+        let _ = self.media_player.set_volume(volume);
     }
 
     pub fn set_media(&self, song:&DrawableSong) -> Result<(), tidal_rs::error::Error>{

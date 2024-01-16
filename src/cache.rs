@@ -1,6 +1,6 @@
-use std::{path::PathBuf, hash::{Hash, self, Hasher}, collections::hash_map::DefaultHasher, fs::File};
+use std::{path::PathBuf, hash::{Hash, Hasher}, collections::hash_map::DefaultHasher, fs::File};
 use std::io::Write;
-use egui::{ahash::{HashMap, HashMapExt}, epaint::tessellator::Path};
+use egui::ahash::{HashMap, HashMapExt};
 
 pub struct CachedObject {
     pub data:Vec<u8>,

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use egui::epaint::tessellator::Path;
+
 use tidal_rs::model::AudioQuality;
 
 #[derive(serde::Deserialize, serde::Serialize)]

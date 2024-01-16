@@ -1,5 +1,5 @@
 use egui::{Rect, Pos2, Align2, FontId, Vec2, Rounding, Color32, Stroke, Image, include_image, Sense, vec2, pos2};
-use crate::{app::{App}, constants::{TEXT_COLOR_SECONDARY, TEXT_COLOR}, gui::{helper, model::{DrawableTrack, DrawableSongArray, DrawableSong}}};
+use crate::{app::App, constants::{TEXT_COLOR_SECONDARY, TEXT_COLOR}, gui::{helper, model::DrawableSong}};
 use crate::gui::model::Drawable;
 
 impl App {

@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Mutex}, ops::{Deref, DerefMut}};
+use std::sync::{Arc, Mutex};
 use tidal_rs::client::TidalApi;
 
 use crate::{download::DownloadManager, configuration::Configuration, gui::model::GuiInput, database::DatabaseWrapper, player::Player, cache::CacheManager};

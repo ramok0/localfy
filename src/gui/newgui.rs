@@ -7,7 +7,7 @@ use crate::{constants, gui::model::Pages};
 use super::model::{Event, DrawableSongArray};
 
 impl eframe::App for crate::app::App {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if let Ok(event) = self.gui_settings.event_manager.1.try_recv() {
             match event {
                 Event::SearchResult(tracks) => {

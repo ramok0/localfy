@@ -1,9 +1,7 @@
-use std::{sync::Arc, path::PathBuf};
+use std::path::PathBuf;
 use polodb_core::{Database, Collection, bson::doc};
 use serde::{Serialize, Deserialize};
 use tidal_rs::model::Track;
-
-use crate::app::App;
 
 
 pub struct DatabaseWrapper {
@@ -16,7 +14,7 @@ pub struct SongController {
 
 impl SongController {
     pub fn add_song(&self, song:Song) {
-        self.collection.insert_one(song);
+        let _ = self.collection.insert_one(song);
     }
 
     pub fn get_songs(&self) -> Vec<Song> {
@@ -62,7 +60,7 @@ impl Song {
 impl DatabaseWrapper {
     fn get_database_path() -> PathBuf {
         if let Ok(program_data) = std::env::var("PROGRAMDATA") {
-            let mut path_buf = PathBuf::from(program_data).join("Localfy").join("localfy.db");
+            let path_buf = PathBuf::from(program_data).join("Localfy").join("localfy.db");
 
             if !path_buf.exists() {
                 std::fs::create_dir_all(path_buf.parent().unwrap()).unwrap();

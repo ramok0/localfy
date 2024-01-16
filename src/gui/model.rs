@@ -1,10 +1,9 @@
-use std::{sync::{Arc, Mutex}, hash::{Hash, Hasher, self}, collections::hash_map::DefaultHasher, time::Instant};
+use std::{sync::Arc, hash::{Hash, Hasher}, collections::hash_map::DefaultHasher, time::Instant};
 
-use eframe::glow::Texture;
-use egui::{ ScrollArea, ColorImage, TextureOptions, TextureId, pos2, Rect, Color32, Image, Vec2 };
+use egui::{ ColorImage, TextureOptions, TextureId };
 use tidal_rs::model::{ self, Track, Album, Artist, SearchResult, SearchType };
 
-use crate::{download::DownloadStatus, database::Song, cache::CacheManager};
+use crate::{database::Song, cache::CacheManager};
 
 #[derive(Clone, PartialEq)]
 pub enum Event {
@@ -57,7 +56,8 @@ pub trait Drawable<T> {
             
             let data = bytes.to_vec();
 
-            cache_manager.add(cache_id, data.clone());
+            //TODO : Add error handling
+            let _ = cache_manager.add(cache_id, data.clone()).map_err(|_| tidal_rs::error::Error::ParseError);
 
             return Ok(data);
         }

@@ -1,9 +1,8 @@
-use std::{sync::{Arc, Mutex}, collections::{VecDeque, HashMap}, hash::Hash, time::{Duration, Instant}, env, path::PathBuf};
+use std::{sync::{Arc, Mutex}, collections::{VecDeque, HashMap}, time::{Duration, Instant}, env, path::PathBuf};
 
 use tidal_rs::model::{Track, PlaybackManifest, Album, AudioQuality};
 use tokio::task;
 use tokio::io::AsyncWriteExt;
-use futures_util::StreamExt;
 
 use crate::{app::AppImpl, database::Song};
 

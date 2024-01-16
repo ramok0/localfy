@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 use std::hash::Hash;
-use egui::{emath, Widget, Rect, Response, Color32, Ui, Label, RichText, Vec2, FontId, Pos2, InnerResponse, Id, Sense};
+use egui::{emath, Rect, Response, Color32, Ui, Label, RichText, Vec2, FontId, Pos2, InnerResponse, Id, Sense};
 
 use crate::constants::{SECONDARY_HOVER_COLOR, TEXT_COLOR};
 

@@ -7,7 +7,7 @@ impl App {
 
         ui.label("Home Page");
 
-        println!("self.gui_settings.song_array.songs : {}",  self.gui_settings.song_array.songs.len());
+      //  println!("self.gui_settings.song_array.songs : {}",  self.gui_settings.song_array.songs.len());
 
         ScrollArea::new([false, true]).show(&mut ui, |ui| {
             let height = ui.available_height();

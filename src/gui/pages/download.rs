@@ -1,5 +1,5 @@
 use egui::{Rect, Layout, vec2, Rounding, ScrollArea};
-use crate::{app::App, constants::BACKGROUND_COLOR, gui::progress_bar::progress_bar, download::{DownloadStatus, self}};
+use crate::{app::App, constants::BACKGROUND_COLOR, gui::progress_bar::progress_bar, download::DownloadStatus};
 
 impl App {
     pub fn draw_downloads_page(&mut self, ui:&mut egui::Ui, max_rect:Rect) {

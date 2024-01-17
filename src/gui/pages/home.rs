@@ -1,5 +1,5 @@
-use egui::{Rect, Layout, Image, Vec2, Sense, ScrollArea, vec2, Rounding};
-use crate::{app::{App}, gui::{model::Drawable, helper::{centerer, scope_click}, song::draw_song}};
+use egui::{Rect, Layout, ScrollArea};
+use crate::{app::App, gui::song::draw_song};
 
 impl App {
     pub fn draw_home_page(&mut self, ui:&mut egui::Ui, max_rect:Rect) {

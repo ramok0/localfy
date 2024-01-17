@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use polodb_core::{Database, Collection, bson::{doc, Document, Bson}};
+use polodb_core::{Database, Collection, bson::doc};
 use serde::{Serialize, Deserialize};
 use tidal_rs::model::Track;
 

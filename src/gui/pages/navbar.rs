@@ -1,6 +1,5 @@
-use egui::{Rect, Pos2, Rounding, Vec2, include_image, Image, Sense, panel, Color32, vec2, pos2};
-use crate::{app::{App}, constants::BACKGROUND_COLOR, gui::{model::Pages, helper}};
-use std::convert::TryInto;
+use egui::{Rect, Pos2, Rounding, Vec2, include_image, Image, Sense, vec2};
+use crate::{app::App, constants::BACKGROUND_COLOR, gui::model::Pages};
 
 const ICONS: usize = 4;
 

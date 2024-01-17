@@ -48,12 +48,20 @@ impl Default for PerSongGuiSettings {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Hash)]
+pub enum PlaybackMode {
+    Repeat,
+    Shuffle,
+    Normal
+}
+
 pub struct PlayerImpl {
     pub app: Arc<AppImpl>,
     pub instance:Instance,
     pub media_player: vlc::MediaPlayer,
     pub per_song_gui_settings:Mutex<PerSongGuiSettings>,
-    pub queue:Mutex<PlayerQueue>
+    pub queue:Mutex<PlayerQueue>,
+    pub playback_mode:Mutex<PlaybackMode>,
 }
 
 impl PlayerImpl {
@@ -66,8 +74,17 @@ impl PlayerImpl {
             instance,
             media_player,
             per_song_gui_settings: Mutex::new(PerSongGuiSettings::default()),
-            queue: Mutex::new(PlayerQueue::default())
+            queue: Mutex::new(PlayerQueue::default()),
+            playback_mode: Mutex::new(PlaybackMode::Normal)
         }
+    }
+
+    pub fn set_playback_mode(&self, playback_mode:PlaybackMode) {
+        *self.playback_mode.lock().unwrap() = playback_mode;
+    }
+
+    pub fn playback_mode(&self) -> PlaybackMode {
+        *self.playback_mode.lock().unwrap()
     }
 
     pub fn get_queue(&self) -> PlayerQueue {
@@ -87,6 +104,14 @@ impl PlayerImpl {
             //TODO: add error handling
             let _result = self.media_player.play();
         }
+    }
+
+    pub fn play_previous(&self) {
+        todo!();
+    }
+
+    pub fn play_next(&self) {
+        todo!();
     }
 
     pub fn pause(&self) {

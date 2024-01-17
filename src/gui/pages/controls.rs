@@ -1,6 +1,48 @@
-use egui::{Rect, Pos2, Align2, FontId, Vec2, Rounding, Color32, Stroke, Image, include_image, Sense, vec2, pos2};
-use crate::{app::App, constants::{TEXT_COLOR_SECONDARY, TEXT_COLOR}, gui::{helper, model::DrawableSong}};
+use std::{ ops::Sub, vec };
+
+use egui::{
+    Rect,
+    Pos2,
+    Align2,
+    FontId,
+    Vec2,
+    Rounding,
+    Color32,
+    Stroke,
+    Image,
+    include_image,
+    Sense,
+    vec2,
+    pos2,
+    ImageSource,
+};
+use crate::{
+    app::App,
+    constants::{
+        TEXT_COLOR_SECONDARY,
+        TEXT_COLOR,
+        SECONDARY_ACTION_COLOR,
+        SECONDARY_ACTION_COLOR_HOVER,
+        SECONDARY_HOVER_COLOR,
+    },
+    gui::{ helper, model::DrawableSong }, player::PlaybackMode,
+};
 use crate::gui::model::Drawable;
+
+const CONTROLS_ICONS_DISTANCE: f32 = 30.0;
+
+fn add_icon_to_controls(
+    ui: &mut egui::Ui,
+    icon: ImageSource,
+    position: Rect,
+    size: Vec2,
+    active:bool
+) -> egui::Response {
+    ui.put(position, Image::new(icon).tint(match active {
+        true => SECONDARY_HOVER_COLOR,
+        false => Color32::WHITE,
+    }).sense(Sense::click()).fit_to_exact_size(size))
+}
 
 impl App {
     pub fn draw_controls(&mut self, ui: &mut egui::Ui, position_mut: &mut Rect) {
@@ -14,20 +56,17 @@ impl App {
         ui.painter().rect(position, Rounding::same(0.0), Color32::BLACK, Stroke::NONE);
         let width = position.max.x - position.min.x;
 
-        let center_x = (position.min.x + position.max.x) / 2.0;
-        let center_y = (position.min.y + position.max.y) / 2.0;
-
-        let center = Pos2 { x: center_x, y: center_y };
+        let center_y = position.center().y;
 
         let font = FontId::proportional(16.0);
 
-        //on calcule les coordonneés du bouton play
-        let play_min = center - Vec2 { x: 10.0, y: 15.0 };
-        let play_max = center + Vec2 { x: 10.0, y: 5.0 };
-        let play_button_rect = Rect { min: play_min, max: play_max };
+        let play_button_rect = Rect::from_center_size(
+            position.center().sub(vec2(0.0, 10.0)),
+            vec2(20.0, 20.0)
+        );
 
         ui.scope(|ui| {
-            let current_title_opt:Option<DrawableSong> = self.player.get_queue().current_title;//self.player.queue().current_title();
+            let current_title_opt: Option<DrawableSong> = self.player.get_queue().current_title; //self.player.queue().current_title();
             if current_title_opt.is_some() {
                 let current_title = current_title_opt.unwrap();
 
@@ -35,30 +74,50 @@ impl App {
                 let image_size = vec2(with_margin.height(), with_margin.height());
                 let image_rect = Rect::from_min_size(with_margin.min, image_size);
 
-                Image::new(current_title.get_texture()).rounding(Rounding::same(10.)).fit_to_exact_size(image_size).paint_at(ui, image_rect);
+                Image::new(current_title.get_texture())
+                    .rounding(Rounding::same(10.0))
+                    .fit_to_exact_size(image_size)
+                    .paint_at(ui, image_rect);
 
                 // helper::croix(ui, image_rect.max);
                 // helper::croix(ui, image_rect.min);
 
                 let title = current_title.get_title();
-                    let mut font_size = self.player.per_song_gui_settings.lock().unwrap().title_font_size;
-                    let title_size = ui.painter().layout_no_wrap(title.clone(), FontId::proportional(font_size), TEXT_COLOR).size();
-                    let play_button_rect_inflated = play_button_rect.expand(5.0); // Inflate the play button rect to create some padding
-                    let title_min = Pos2 { x: image_rect.max.x + (position.width() * XMARGINTITLE), y: center_y };
-                    let mut title_rect = Rect::from_min_size(title_min, title_size);
+                let mut font_size = self.player.per_song_gui_settings
+                    .lock()
+                    .unwrap().title_font_size;
+                let title_size = ui
+                    .painter()
+                    .layout_no_wrap(title.clone(), FontId::proportional(font_size), TEXT_COLOR)
+                    .size();
+                let play_button_rect_inflated = play_button_rect.expand(5.0); // Inflate the play button rect to create some padding
+                let title_min = Pos2 {
+                    x: image_rect.max.x + position.width() * XMARGINTITLE,
+                    y: center_y,
+                };
+                let mut title_rect = Rect::from_min_size(title_min, title_size);
 
-                    while title_rect.intersects(play_button_rect_inflated) && font_size > 8.0 {
-                        font_size -= 1.0;
-                        let new_font = FontId::proportional(font_size);
-                        title_rect = Rect::from_min_size(title_min, ui.painter().layout_no_wrap(title.clone(), new_font, TEXT_COLOR).size());
-                    }
+                while title_rect.intersects(play_button_rect_inflated) && font_size > 8.0 {
+                    font_size -= 1.0;
+                    let new_font = FontId::proportional(font_size);
+                    title_rect = Rect::from_min_size(
+                        title_min,
+                        ui.painter().layout_no_wrap(title.clone(), new_font, TEXT_COLOR).size()
+                    );
+                }
 
-                ui.painter().text(title_min, Align2::LEFT_CENTER, title.clone(), FontId::proportional(font_size), TEXT_COLOR);
+                ui.painter().text(
+                    title_min,
+                    Align2::LEFT_CENTER,
+                    title.clone(),
+                    FontId::proportional(font_size),
+                    TEXT_COLOR
+                );
 
                 let artist_font = FontId::proportional(font.size - 5.0);
                 let artist = current_title.get_item().artist;
 
-                let artist_name_pos = pos2(title_min.x, title_min.y +15.);
+                let artist_name_pos = pos2(title_min.x, title_min.y + 15.0);
 
                 ui.painter().text(
                     artist_name_pos,
@@ -68,9 +127,8 @@ impl App {
                     TEXT_COLOR_SECONDARY
                 );
 
-             //   ui.image(current_title.get_texture());
+                //   ui.image(current_title.get_texture());
             }
-
 
             let progress = self.player.get_progress();
             let duration = self.player.get_duration();
@@ -82,7 +140,7 @@ impl App {
 
                     //placer la barre de progression juste en dessous du bouton play mais avec la width qu'on vient de calculer
                     let progress_min = Pos2 {
-                        x: play_max.x - 10.0 - progress_bar_width / 2.0,
+                        x: play_button_rect.max.x - 10.0 - progress_bar_width / 2.0,
                         y: center_y + 10.0,
                     };
 
@@ -143,41 +201,62 @@ impl App {
                     //     self.jukebox().set_progress(progress);
                     // }
 
-                    if helper::slider(ui, progress_rect, &mut progress, 0..=duration, "_progressbar").changed() {
+                    if
+                        helper
+                            ::slider(ui, progress_rect, &mut progress, 0..=duration, "_progressbar")
+                            .changed()
+                    {
                         self.player.set_progress(progress);
                     }
                 }
             }
 
-            if self.player.is_playing() {
-                if
-                    ui
-                        .put(
-                            play_button_rect,
-                            Image::new(include_image!("../../../assets/pause-solid.svg"))
-                                  .fit_to_exact_size(Vec2::new(20., 20.))
-                                .sense(Sense::click())
-                        )
-                        .on_hover_cursor(egui::CursorIcon::PointingHand)
-                        .clicked()
-                {
-                    self.player.pause();
+            let playback_mode = self.player.playback_mode();
+            let icon_size = vec2(20.0, 20.0);
+
+            if add_icon_to_controls(ui, include_image!("../../../assets/repeat.svg"), play_button_rect.translate(vec2(CONTROLS_ICONS_DISTANCE * 2.0, 0.0)), icon_size, playback_mode == PlaybackMode::Repeat).clicked() {
+                match playback_mode {
+                    PlaybackMode::Repeat => self.player.set_playback_mode(crate::player::PlaybackMode::Normal),
+                    _ => self.player.set_playback_mode(crate::player::PlaybackMode::Repeat),
                 }
-            } else {
-                if
-                    ui
-                        .put(
-                            play_button_rect,
-                            Image::new(include_image!("../../../assets/play-solid.svg"))
-                                .fit_to_exact_size(Vec2::new(20., 20.))
-                                .sense(Sense::click())
-                        )
-                        .on_hover_cursor(egui::CursorIcon::PointingHand)
-                        .clicked()
-                {
+            }
+
+
+
+            if
+                add_icon_to_controls(
+                    ui,
+                    include_image!("../../../assets/forward-step-solid.svg"),
+                    play_button_rect.translate(vec2(CONTROLS_ICONS_DISTANCE, 0.0)),
+                    icon_size,
+                    false
+                ).clicked()
+            {
+                self.player.play_next();
+            }
+
+            if add_icon_to_controls(ui, include_image!("../../../assets/backward-step-solid.svg"), play_button_rect.translate(vec2(-CONTROLS_ICONS_DISTANCE, 0.0)), icon_size, false).clicked() {
+                self.player.play_previous();
+            }
+
+            if add_icon_to_controls(ui, include_image!("../../../assets/shuffle-solid.svg"), play_button_rect.translate(vec2(-CONTROLS_ICONS_DISTANCE * 2.0, 0.0)), icon_size, playback_mode == PlaybackMode::Shuffle).clicked() {
+                match playback_mode {
+                    PlaybackMode::Shuffle => self.player.set_playback_mode(crate::player::PlaybackMode::Normal),
+                    _ => self.player.set_playback_mode(crate::player::PlaybackMode::Shuffle),
+                }
+            }
+
+            if add_icon_to_controls(ui, match self.player.is_playing() {
+                true => include_image!("../../../assets/pause-solid.svg"),
+                false => include_image!("../../../assets/play-solid.svg"),
+            }, play_button_rect, icon_size, false).clicked() {
+                if self.player.is_playing() {
+                    self.player.pause();
+                } else {
                     self.player.play();
                 }
             }
+
             let volume_max = Pos2 {
                 x: position.max.x - position.max.x * 0.015,
                 y: center_y,
@@ -206,14 +285,21 @@ impl App {
                 _ => include_image!("../../../assets/volume-high-solid.svg"),
             };
 
-            ui.put(
-                volume_icon_pos,
-                Image::new(image).fit_to_exact_size(Vec2::new(15., 15.))
-            );
+            ui.put(volume_icon_pos, Image::new(image).fit_to_exact_size(Vec2::new(15.0, 15.0)));
 
             ui.style_mut().spacing.slider_width = 90.0;
 
-            if helper::slider(ui, volume_bar_rect, &mut self.user_settings.volume, 0..=100, "_volume").changed() {
+            if
+                helper
+                    ::slider(
+                        ui,
+                        volume_bar_rect,
+                        &mut self.user_settings.volume,
+                        0..=100,
+                        "_volume"
+                    )
+                    .changed()
+            {
                 self.player.set_volume(self.user_settings.volume);
             }
         });

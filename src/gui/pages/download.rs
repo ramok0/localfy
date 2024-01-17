@@ -17,10 +17,10 @@ impl App {
             ui.label(format!("{} downloads", downloads.len()));
         }
 
-        let mut list_rect = max_rect.expand2(vec2(0., -50.)).expand(-25.);
+        let list_rect = max_rect.expand2(vec2(0., -50.)).expand(-35.);
 
         //create padding
-        let mut download_ui = ui.child_ui(list_rect.expand(-10.), Layout::default());
+        let mut download_ui = ui.child_ui(list_rect, Layout::default());
         ui.painter().rect_filled(list_rect, Rounding::same(5.), BACKGROUND_COLOR);
 
         ScrollArea::new([false, true]).show(&mut download_ui, |download_ui: &mut egui::Ui| {
@@ -36,10 +36,10 @@ impl App {
                 res.on_hover_ui_at_pointer(|ui| {
                     if download.status == DownloadStatus::Downloading {
                         ui.label(format!("{}%", (download.progress * 100.0).round()));
-                        if download.speed.to_kbps() > 1000.0 {
-                            ui.label(format!("{} MB/s", (download.speed.to_mbps()*100.0).round() / 100.0));
+                        if download.speed.as_kbps() > 1000.0 {
+                            ui.label(format!("{} MB/s", (download.speed.as_mbps()*100.0).round() / 100.0));
                         } else {
-                            ui.label(format!("{} KB/s", (download.speed.to_kbps()*100.0).round() / 100.0));
+                            ui.label(format!("{} KB/s", (download.speed.as_kbps()*100.0).round() / 100.0));
                         }
                     }
                     //calculer bytes => mb

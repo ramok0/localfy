@@ -52,11 +52,11 @@ impl DataRate {
         self.bytes_per_second
     }
 
-    pub fn to_kbps(&self) -> f64 {
+    pub fn as_kbps(&self) -> f64 {
         (self.bytes_per_second as f64 * 8.0) / 1000.0
     }
 
-    pub fn to_mbps(&self) -> f64 {
+    pub fn as_mbps(&self) -> f64 {
         (self.bytes_per_second as f64 * 8.0) / 1000000.0
     }
 }

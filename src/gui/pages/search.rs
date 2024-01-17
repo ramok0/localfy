@@ -24,6 +24,8 @@ impl App {
             let search_query = self.gui_settings.search_query.clone();
             let tx = self.gui_settings.event_manager.0.clone();
             let ctx = ui.ctx().clone();
+            self.gui_settings.is_searching = true;
+            self.gui_settings.search_results.clear();
             let cache_manager = self.app.cache_manager.clone();
             tokio::spawn(async move {
                 let result: Result<SearchResult, tidal_rs::error::Error> = tidal_client
@@ -38,6 +40,12 @@ impl App {
 
                     let _ = tx.send(Event::SearchResult(result)).await;
                 }
+            });
+        }
+
+        if self.gui_settings.is_searching {
+            ui.vertical_centered(|ui| {
+                ui.heading("Searching...");
             });
         }
 
@@ -57,7 +65,7 @@ impl App {
             ScrollArea::new([false, true]).show(&mut ui, |ui| {
                 match self.gui_settings.search_type {
                     SearchType::Artist => {
-                        self.gui_settings.search_results.artist.iter().for_each(|artist| {
+                        self.gui_settings.search_results.artists.iter().for_each(|artist| {
                             ui.horizontal(|ui| {
                                 ui.add(
                                     Image::new(artist.get_texture()).fit_to_exact_size(
@@ -89,7 +97,7 @@ impl App {
                         });
                     }
                     SearchType::Track => {
-                        self.gui_settings.search_results.track.iter().for_each(|track| {
+                        self.gui_settings.search_results.tracks.iter().for_each(|track| {
                             ui.horizontal(|ui| {
                                 ui.add(
                                     Image::new(track.get_texture()).fit_to_exact_size(vec2(35., 35.))
@@ -111,7 +119,7 @@ impl App {
                         });
                     }
                     SearchType::Album => {
-                        self.gui_settings.search_results.album.iter().for_each(|album| {
+                        self.gui_settings.search_results.albums.iter().for_each(|album| {
                             ui.horizontal(|ui| {
                                 ui.add(
                                     Image::new(album.get_texture()).fit_to_exact_size(vec2(35., 35.))

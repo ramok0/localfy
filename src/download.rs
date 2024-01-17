@@ -20,7 +20,7 @@ pub enum DownloadStatus {
     Queued,
     Downloading,
     Finished,
-    Failed
+    Failed(String)
 }
 
 impl ToString for DownloadStatus {
@@ -30,7 +30,7 @@ impl ToString for DownloadStatus {
             DownloadStatus::Queued => "Queued".to_string(),
             DownloadStatus::Downloading => "Downloading".to_string(),
             DownloadStatus::Finished => "Finished".to_string(),
-            DownloadStatus::Failed => "Failed".to_string()
+            DownloadStatus::Failed(Message) => format!("Failed with message : {}", Message)
         }
     }
 
@@ -153,6 +153,10 @@ impl DownloadManager {
         self.download_state.lock().unwrap().values().cloned().collect()
     }
 
+    pub fn remove_download(&self, download:Download) {
+        self.download_queue.lock().unwrap().retain(|x| x.track != download.track);
+    }
+
     pub async fn enqueue_single(&self, app:Arc<AppImpl>, quality:AudioQuality, track:Track) -> Result<(), tidal_rs::error::Error>
     {
         let manifest = app.tidal_client.media().get_highest_quality_avaliable_stream_url(track.id, quality).await?;
@@ -168,7 +172,7 @@ impl DownloadManager {
 
         let title = track.title.clone();
         let mime_type = manifest.mime_type.clone();
-        let download = Download::new(app.clone(), track, manifest, Some(base_path.join(format!("{}.{}", title, mime_type.get_file_extension()))));
+        let download = Download::new(app.clone(), track, manifest, Some(base_path.join(format!("{}.{}", title.replace("/", "-").replace("\\", "-"), mime_type.get_file_extension()))));
 
         self.enqueue(download);
 
@@ -209,11 +213,11 @@ impl DownloadManager {
                             if let Ok(mut response) = client.get(url).send().await {
                                 let total_size = response.content_length().unwrap_or(0) as usize;
                                 let mut downloaded = 0;
+                                let mut on_last_second_downloaded:(usize, Instant) = (0, Instant::now());
                                 let folder = download.path.parent().unwrap();
                                 if !folder.exists() {
                                     std::fs::create_dir_all(folder).unwrap();
                                 }
-                                let mut file = tokio::fs::File::create(download.path.clone()).await.unwrap();
 
                                 let state = DownloadState::new(download.clone(), total_size);
                                 {
@@ -221,8 +225,23 @@ impl DownloadManager {
                                     download_state.insert(state.download.track.clone(), state);
                                 }
 
+                                let file_result = tokio::fs::File::create(download.path.clone()).await;
+
+                                if file_result.is_err() {
+                                    let mut download_state = download_state.lock().unwrap();
+                                    let state = download_state.get_mut(&download.track).unwrap();
+                                    dbg!(download.path.clone());
+                                    state.status = DownloadStatus::Failed(file_result.unwrap_err().to_string());
+                                    continue;
+                                }
+
+                                let mut file = file_result.unwrap();
+       
+
                                 while let Some(chunk) = response.chunk().await.unwrap() {
                                     downloaded += chunk.len() as u64;
+                                    on_last_second_downloaded.0 += chunk.len();
+
                                     file.write_all(&chunk).await.unwrap();
 
                                     //calculate speed, eta and progress, then update the state
@@ -235,9 +254,14 @@ impl DownloadManager {
                                         //calculer la vitesse
                                         let elapsed = state.started_at.elapsed();
                                         //bytes per second
-                                        state.speed = DataRate::new(downloaded as f32 / elapsed.as_secs_f32());
+                                        state.speed = DataRate::new(on_last_second_downloaded.0 as f32 / on_last_second_downloaded.1.elapsed().as_secs_f32());
                                         state.progress = downloaded as f32 / total_size as f32;
                                         state.status = DownloadStatus::Downloading;    
+
+                                        if on_last_second_downloaded.1.elapsed().as_secs() >= 1 {
+                                            on_last_second_downloaded.1 = Instant::now();
+                                            on_last_second_downloaded.0 = 0;
+                                        }
                                     };
                                 }
 

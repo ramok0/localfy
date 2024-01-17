@@ -12,6 +12,7 @@ impl eframe::App for crate::app::App {
             match event {
                 Event::SearchResult(tracks) => {
                     self.gui_settings.search_results = tracks;
+                    self.gui_settings.is_searching = false;
                 },
                 Event::SongArray(song_array) => {
                     self.gui_settings.requested_song_array = false;
@@ -25,7 +26,7 @@ impl eframe::App for crate::app::App {
         songs.hash(&mut hasher);
         let song_array_hash = hasher.finish();
 
-        if !self.gui_settings.requested_song_array && self.gui_settings.song_array.hash != song_array_hash && self.gui_settings.song_array.created_at.elapsed().as_secs() > 2 {
+        if !self.gui_settings.requested_song_array && self.gui_settings.song_array.hash != song_array_hash && (self.gui_settings.last_songs_update.is_none() || self.gui_settings.last_songs_update.unwrap().elapsed().as_secs() > 2) {
             self.gui_settings.requested_song_array = true;
             
             let ctx = ctx.clone();

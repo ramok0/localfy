@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use polodb_core::{Database, Collection, bson::doc};
+use polodb_core::{Database, Collection, bson::{doc, Document, Bson}};
 use serde::{Serialize, Deserialize};
 use tidal_rs::model::Track;
 
@@ -23,6 +23,14 @@ impl SongController {
         } else {
             return vec![];
         }
+    }
+
+    pub fn remove_song(&self, song:Song) -> Result<(), polodb_core::Error>{
+        self.collection.delete_one(doc! {
+            "path": song.path.to_str().unwrap()
+        })?;
+
+        Ok(())
     }
 }
 

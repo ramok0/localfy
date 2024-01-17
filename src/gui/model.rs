@@ -43,7 +43,6 @@ pub trait Drawable<T> {
             let mut cache_manager = cache_manager.lock().await;
             
             if let Some(cached_item) = cache_manager.get(cache_id.clone()) {
-                println!("Found cover using cache");
                 return Ok(cached_item.data.clone());
             }
 
@@ -238,22 +237,28 @@ impl DrawableArtist {
 
 #[derive(Clone, PartialEq)]
 pub struct DrawableSearchResult {
-    pub track: Vec<DrawableTrack>,
-    pub album: Vec<DrawableAlbum>,
-    pub artist: Vec<DrawableArtist>,
+    pub tracks: Vec<DrawableTrack>,
+    pub albums: Vec<DrawableAlbum>,
+    pub artists: Vec<DrawableArtist>,
 }
 
 impl DrawableSearchResult {
     pub fn new() -> Self {
         Self {
-            track: Vec::new(),
-            album: Vec::new(),
-            artist: Vec::new(),
+            tracks: Vec::new(),
+            albums: Vec::new(),
+            artists: Vec::new(),
         }
     }
 
+    pub fn clear(&mut self) {
+        self.tracks.clear();
+        self.albums.clear();
+        self.artists.clear();
+    }
+
     pub fn is_empty(&self) -> bool {
-        self.track.is_empty() && self.album.is_empty() && self.artist.is_empty()
+        self.tracks.is_empty() && self.albums.is_empty() && self.artists.is_empty()
     }
 
     pub async fn from_search_result(ctx: &egui::Context, item: &SearchResult, cache_manager:Arc<tokio::sync::Mutex<CacheManager>>) -> Self {
@@ -273,9 +278,9 @@ impl DrawableSearchResult {
         }
 
         Self {
-            track,
-            album,
-            artist,
+            tracks: track,
+            albums: album,
+            artists: artist,
         }
     }
 }
@@ -285,6 +290,12 @@ pub struct DrawableSong {
     pub song: Song,
     texture: egui::TextureHandle,
     texture_id: egui::TextureId,
+}
+
+impl DrawableSong {
+    pub fn get_artist(&self) -> String {
+        self.song.artist.clone()
+    }
 }
 
 impl Drawable<Song> for DrawableSong {
@@ -334,7 +345,6 @@ impl DrawableSong {
 pub struct DrawableSongArray {
    pub songs: Vec<DrawableSong>,
    pub hash: u64,
-   pub created_at: Instant
 }
 
 impl DrawableSongArray {
@@ -342,7 +352,6 @@ impl DrawableSongArray {
         Self {
             songs: Vec::new(),
             hash: 0,
-            created_at: Instant::now()
         }
     }
 
@@ -359,7 +368,6 @@ impl DrawableSongArray {
         Self {
             songs: drawable_songs,
             hash: hasher.finish(),
-            created_at: Instant::now()
         }
     }
 }
@@ -371,7 +379,9 @@ pub struct GuiInput {
     pub search_type: SearchType,
     pub song_array: DrawableSongArray,
     pub requested_song_array:bool,
-    pub page:Pages
+    pub page:Pages,
+    pub last_songs_update:Option<Instant>,
+    pub is_searching:bool
 }
 
 impl Default for GuiInput {
@@ -383,7 +393,9 @@ impl Default for GuiInput {
             search_type: SearchType::Track,
             song_array: DrawableSongArray::new(),
             requested_song_array: false,
-            page: Pages::Home
+            page: Pages::Home,
+            last_songs_update: None,
+            is_searching: false
         }
     }
 }

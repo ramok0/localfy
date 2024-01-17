@@ -29,7 +29,7 @@ impl App {
                     ui.horizontal(|ui| {
                         ui.label(format!("{} - {}", download.download.track.title, download.download.track.get_artist().name));
                         
-                        progress_bar(ui, download.progress * 100.0, vec2(ui.available_width() - ui.spacing().item_spacing.x, 30.));
+                        progress_bar(ui, download.progress, vec2(ui.available_width() - ui.spacing().item_spacing.x, 30.));
                     });
                 }).response;
     

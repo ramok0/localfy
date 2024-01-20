@@ -7,29 +7,16 @@ impl App {
 
         ui.label("Home Page");
 
-      //  println!("self.gui_settings.song_array.songs : {}",  self.gui_settings.song_array.songs.len());
-
         ScrollArea::new([false, true]).show(&mut ui, |ui| {
             let height = ui.available_height();
-            self.gui_settings.song_array.songs.iter().for_each(|song| {
-                // let response = scope_click(ui, |ui| {
-                //     ui.horizontal(|ui| {
-                //         ui.add(
-                //             Image::new(song.get_texture()).rounding(Rounding::same(15.)).fit_to_exact_size(
-                //                 vec2(60., 60.)
-                //             )
-                //         );
-                //         ui.label(format!("{}", song.get_title()));
-                //     });
-                // });
+            
+            let playlist = {
+                self.app.player.queue().get_playlist().clone()
+            };
 
-                // if response.response.clicked() {
-                //     println!("Clicked");
-                //     let _ = self.player.set_media(&song);
-                // }
-
+            playlist.iter().for_each(|song| {
                 draw_song(&self, ui, song,height );
-        });
+            });
         });
     }
 }

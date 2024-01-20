@@ -62,11 +62,13 @@ impl App {
 
         let play_button_rect = Rect::from_center_size(
             position.center().sub(vec2(0.0, 10.0)),
-            vec2(20.0, 20.0)
+            vec2(30.0, 30.0)
         );
 
         ui.scope(|ui| {
-            let current_title_opt: Option<DrawableSong> = self.player.get_queue().current_title; //self.player.queue().current_title();
+            let current_title_opt: Option<DrawableSong> = {
+                self.app.player.queue().get_current_title()
+            }; //self.player.queue().current_title();
             if current_title_opt.is_some() {
                 let current_title = current_title_opt.unwrap();
 
@@ -83,7 +85,7 @@ impl App {
                 // helper::croix(ui, image_rect.min);
 
                 let title = current_title.get_title();
-                let mut font_size = self.player.per_song_gui_settings
+                let mut font_size = self.app.player.per_song_gui_settings
                     .lock()
                     .unwrap().title_font_size;
                 let title_size = ui
@@ -130,8 +132,8 @@ impl App {
                 //   ui.image(current_title.get_texture());
             }
 
-            let progress = self.player.get_progress();
-            let duration = self.player.get_duration();
+            let progress = self.app.player.get_progress();
+            let duration = self.app.player.get_duration();
 
             if let Some(duration) = duration {
                 if let Some(mut progress) = progress {
@@ -206,18 +208,18 @@ impl App {
                             ::slider(ui, progress_rect, &mut progress, 0..=duration, "_progressbar")
                             .changed()
                     {
-                        self.player.set_progress(progress);
+                        self.app.player.set_progress(progress);
                     }
                 }
             }
 
-            let playback_mode = self.player.playback_mode();
+            let playback_mode = self.app.player.playback_mode();
             let icon_size = vec2(20.0, 20.0);
 
             if add_icon_to_controls(ui, include_image!("../../../assets/repeat.svg"), play_button_rect.translate(vec2(CONTROLS_ICONS_DISTANCE * 2.0, 0.0)), icon_size, playback_mode == PlaybackMode::Repeat).clicked() {
                 match playback_mode {
-                    PlaybackMode::Repeat => self.player.set_playback_mode(crate::player::PlaybackMode::Normal),
-                    _ => self.player.set_playback_mode(crate::player::PlaybackMode::Repeat),
+                    PlaybackMode::Repeat => self.app.player.set_playback_mode(crate::player::PlaybackMode::Normal),
+                    _ => self.app.player.set_playback_mode(crate::player::PlaybackMode::Repeat),
                 }
             }
 
@@ -232,28 +234,28 @@ impl App {
                     false
                 ).clicked()
             {
-                self.player.play_next();
+                self.app.player.play_next();
             }
 
             if add_icon_to_controls(ui, include_image!("../../../assets/backward-step-solid.svg"), play_button_rect.translate(vec2(-CONTROLS_ICONS_DISTANCE, 0.0)), icon_size, false).clicked() {
-                self.player.play_previous();
+                self.app.player.play_previous();
             }
 
             if add_icon_to_controls(ui, include_image!("../../../assets/shuffle-solid.svg"), play_button_rect.translate(vec2(-CONTROLS_ICONS_DISTANCE * 2.0, 0.0)), icon_size, playback_mode == PlaybackMode::Shuffle).clicked() {
                 match playback_mode {
-                    PlaybackMode::Shuffle => self.player.set_playback_mode(crate::player::PlaybackMode::Normal),
-                    _ => self.player.set_playback_mode(crate::player::PlaybackMode::Shuffle),
+                    PlaybackMode::Shuffle => self.app.player.set_playback_mode(crate::player::PlaybackMode::Normal),
+                    _ => self.app.player.set_playback_mode(crate::player::PlaybackMode::Shuffle),
                 }
             }
 
-            if add_icon_to_controls(ui, match self.player.is_playing() {
+            if add_icon_to_controls(ui, match self.app.player.is_playing() {
                 true => include_image!("../../../assets/pause-solid.svg"),
                 false => include_image!("../../../assets/play-solid.svg"),
-            }, play_button_rect, icon_size, false).clicked() {
-                if self.player.is_playing() {
-                    self.player.pause();
+            }, play_button_rect, vec2(30., 30.), false).clicked() {
+                if self.app.player.is_playing() {
+                    self.app.player.pause();
                 } else {
-                    self.player.play();
+                    self.app.player.play();
                 }
             }
 
@@ -279,7 +281,7 @@ impl App {
                 max: volume_icon_center + Vec2 { x: 10.0, y: 20.0 },
             };
 
-            let image: egui::ImageSource<'_> = match self.player.get_volume() {
+            let image: egui::ImageSource<'_> = match self.app.player.get_volume() {
                 0 => include_image!("../../../assets/volume-off-solid.svg"),
                 1..=60 => include_image!("../../../assets/volume-low-solid.svg"),
                 _ => include_image!("../../../assets/volume-high-solid.svg"),
@@ -300,7 +302,7 @@ impl App {
                     )
                     .changed()
             {
-                self.player.set_volume(self.user_settings.volume);
+                self.app.player.set_volume(self.user_settings.volume);
             }
         });
     }

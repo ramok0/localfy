@@ -11,7 +11,6 @@ use crate::gui::model::DrawableSong;
 use super::helper::centerer;
 use super::model::Drawable;
 
-
 pub fn draw_song(app:&App, ui:&mut egui::Ui, song:&DrawableSong, height:f32) {
     if let Some(last_rect) = ui.memory_mut(|mem| mem.data.get_temp(Id::new(song.get_item()))) {
         ui.painter().rect_filled(last_rect, Rounding::same(5.), constants::BACKGROUND_COLOR);
@@ -23,7 +22,6 @@ pub fn draw_song(app:&App, ui:&mut egui::Ui, song:&DrawableSong, height:f32) {
         ui.horizontal(|ui| {
 
             ui.add(Image::new(song.get_texture()).rounding(Rounding::same(15.)).fit_to_exact_size(vec2(height /10., height /10.)));
-            let pos = ui.next_widget_position();
            
             let text = song.get_title();
             let feats:Option<Vec<String>> = song.song.tidal_track.as_ref().and_then(|track| {
@@ -37,10 +35,14 @@ pub fn draw_song(app:&App, ui:&mut egui::Ui, song:&DrawableSong, height:f32) {
 
             let text = if let Some(feats) = feats {
                 let mut text = text.clone();
-                text.push_str(" (feat. ");
-                text.push_str(&feats.join(", "));
-                text.push_str(")");
-                text
+                if !text.contains("feat") {
+                    text.push_str(" (feat. ");
+                    text.push_str(&feats.join(", "));
+                    text.push_str(")");
+                    text
+                } else {
+                    text
+                }
             } else {
                 text
             };
@@ -53,7 +55,7 @@ pub fn draw_song(app:&App, ui:&mut egui::Ui, song:&DrawableSong, height:f32) {
     ui.memory_mut(|mem| mem.data.insert_temp(Id::new(song.get_item()), response.response.rect.expand(10.)));
 
     if response.response.clicked() {
-        let _ = app.player.set_media(&song);
+        let _ = app.app.player.set_media(&song, true);
     }
 
     response.response.context_menu(|ui| {
@@ -62,6 +64,12 @@ pub fn draw_song(app:&App, ui:&mut egui::Ui, song:&DrawableSong, height:f32) {
 }
 
 pub fn song_context_menu(app:Arc<AppImpl>, ui:&mut egui::Ui, song:&DrawableSong) {
+    if ui.button("Add to waiting-list").clicked() {
+        app.player.queue().add_to_queue(&song);
+        ui.close_menu();
+        
+    }
+
     if ui.button("Delete").clicked() {
         app.database.songs().remove_song(song.song.clone());
         ui.close_menu();

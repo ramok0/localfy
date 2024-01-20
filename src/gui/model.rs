@@ -5,7 +5,9 @@ use tidal_rs::model::{ self, Track, Album, Artist, SearchResult, SearchType };
 
 use crate::{database::Song, cache::CacheManager};
 
-#[derive(Clone, PartialEq)]
+use super::page::RenderablePage;
+
+#[derive(PartialEq)]
 pub enum Event {
     SearchResult(DrawableSearchResult),
     SongArray(DrawableSongArray)
@@ -341,7 +343,7 @@ impl DrawableSong {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(PartialEq)]
 pub struct DrawableSongArray {
    pub songs: Vec<DrawableSong>,
    pub hash: u64,
@@ -372,16 +374,24 @@ impl DrawableSongArray {
     }
 }
 
+
+pub enum UserLocation {
+    Home,
+    Playlist(Box<dyn RenderablePage>),
+    Artist(Box<dyn RenderablePage>),
+    Album(Box<dyn RenderablePage>)
+}
+
 pub struct GuiInput {
     pub search_query: String,
     pub event_manager: EventManager,
     pub search_results: DrawableSearchResult,
     pub search_type: SearchType,
-    pub song_array: DrawableSongArray,
     pub requested_song_array:bool,
     pub page:Pages,
     pub last_songs_update:Option<Instant>,
-    pub is_searching:bool
+    pub is_searching:bool,
+    pub location:UserLocation
 }
 
 impl Default for GuiInput {
@@ -391,11 +401,11 @@ impl Default for GuiInput {
             event_manager: tokio::sync::mpsc::channel(20),
             search_results: DrawableSearchResult::new(),
             search_type: SearchType::Track,
-            song_array: DrawableSongArray::new(),
             requested_song_array: false,
             page: Pages::Home,
             last_songs_update: None,
-            is_searching: false
+            is_searching: false,
+            location: UserLocation::Home
         }
     }
 }

@@ -15,10 +15,17 @@ impl eframe::App for crate::app::App {
                     self.gui_settings.is_searching = false;
                 },
                 Event::SongArray(song_array) => {
+                    self.app.player.queue().set_playlist(&song_array.songs);
                     self.gui_settings.requested_song_array = false;
-                    self.gui_settings.song_array = song_array;
+                    {
+                        self.app.player.queue().set_library(song_array);
+                    }
                 }
             }
+        }
+
+        {
+            self.app.player.tick();
         }
 
         let songs = self.app.database.songs().get_songs();
@@ -26,17 +33,23 @@ impl eframe::App for crate::app::App {
         songs.hash(&mut hasher);
         let song_array_hash = hasher.finish();
 
-        if !self.gui_settings.requested_song_array && self.gui_settings.song_array.hash != song_array_hash && (self.gui_settings.last_songs_update.is_none() || self.gui_settings.last_songs_update.unwrap().elapsed().as_secs() > 2) {
-            self.gui_settings.requested_song_array = true;
-            
-            let ctx = ctx.clone();
-            let tx = self.gui_settings.event_manager.0.clone();
-            self.gui_settings.requested_song_array = true;
-            let cache_manager = self.app.cache_manager.clone();
-            tokio::spawn(async move {
-                let song_array = DrawableSongArray::from_song_array(&ctx,songs, cache_manager).await;
-                let _  = tx.send(Event::SongArray(song_array)).await;
-            });
+        {
+            let song_array_cached_hash = {
+                self.app.player.queue().get_library().hash
+            };
+
+            if !self.gui_settings.requested_song_array && song_array_cached_hash != song_array_hash && (self.gui_settings.last_songs_update.is_none() || self.gui_settings.last_songs_update.unwrap().elapsed().as_secs() > 2) {
+                self.gui_settings.requested_song_array = true;
+                
+                let ctx = ctx.clone();
+                let tx = self.gui_settings.event_manager.0.clone();
+                self.gui_settings.requested_song_array = true;
+                let cache_manager = self.app.cache_manager.clone();
+                tokio::spawn(async move {
+                    let song_array = DrawableSongArray::from_song_array(&ctx,songs, cache_manager).await;
+                    let _  = tx.send(Event::SongArray(song_array)).await;
+                });
+            }
         }
 
         // if ctx.input(|i| i.key_released(egui::Key::Space)) {

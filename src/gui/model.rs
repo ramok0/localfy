@@ -3,8 +3,8 @@ use std::{sync::Arc, hash::{Hash, Hasher}, collections::hash_map::DefaultHasher,
 use egui::{ ColorImage, TextureOptions, TextureId };
 use tidal_rs::model::{ self, Track, Album, Artist, SearchResult, SearchType };
 
-use crate::{database::Song, cache::CacheManager};
-
+use crate::cache::CacheManager;
+use crate::song::Song;
 use super::page::RenderablePage;
 
 #[derive(PartialEq)]

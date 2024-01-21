@@ -5,7 +5,7 @@ use egui::{Image, Rounding, vec2, Label, RichText, Id, Color32};
 
 use crate::app::{App, AppImpl};
 use crate::constants::{TEXT_COLOR, self};
-use crate::database::Song;
+
 use crate::gui::model::DrawableSong;
 
 use super::helper::centerer;
@@ -71,7 +71,7 @@ pub fn song_context_menu(app:Arc<AppImpl>, ui:&mut egui::Ui, song:&DrawableSong)
     }
 
     if ui.button("Delete").clicked() {
-        app.database.songs().remove_song(song.song.clone());
+        app.database().songs().remove_song(song.song.clone());
         ui.close_menu();
     }
     

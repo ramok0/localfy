@@ -4,7 +4,8 @@ use tidal_rs::model::{Track, PlaybackManifest, Album, AudioQuality};
 use tokio::task;
 use tokio::io::AsyncWriteExt;
 
-use crate::{app::AppImpl, database::Song};
+use crate::{app::AppImpl};
+use crate::song::Song;
 
 #[derive(Clone)]
 pub struct Download {
@@ -120,7 +121,9 @@ impl Download {
     }
 
     pub fn on_finished(&self) {
-        self.app.database.songs().add_song(Song::new_with_track(self.path.clone(), self.track.clone()));
+        let mut database = self.app.database.lock().unwrap();
+        database.songs().add_song(Song::new_with_track(self.path.clone(), self.track.clone()));
+        database.flush();
     }
 }
 
@@ -159,20 +162,33 @@ impl DownloadManager {
 
     pub async fn enqueue_single(&self, app:Arc<AppImpl>, quality:AudioQuality, track:Track) -> Result<(), tidal_rs::error::Error>
     {
+        let caracteres_interdits = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
+        let mut normalize_string = |x:String| -> String {
+                x.chars()
+                .map(|c| if caracteres_interdits.contains(&c) { '_' } else { c })
+                .collect::<String>()
+        };
+
         let manifest = app.tidal_client.media().get_highest_quality_avaliable_stream_url(track.id, quality).await?;
         let mut base_path = app.configuration.lock().unwrap().get_base_download_folder().join(track.get_artist().name);
 
         if track.album.is_some() {
-            base_path = base_path.join(track.album.as_ref().unwrap().title.clone());
+            let album_name = track.album.as_ref().unwrap().title.clone();
+         
+
+            base_path = base_path.join(normalize_string(album_name));
         }
 
         if !base_path.exists() {
-            std::fs::create_dir_all(base_path.clone()).unwrap();
+            
+            if std::fs::create_dir_all(&base_path).is_err() {
+                dbg!("Failed to create directory : {}", base_path.clone());
+            }
         }
 
         let title = track.title.clone();
         let mime_type = manifest.mime_type.clone();
-        let download = Download::new(app.clone(), track, manifest, Some(base_path.join(format!("{}.{}", title.replace("/", "-").replace("\\", "-"), mime_type.get_file_extension()))));
+        let download = Download::new(app.clone(), track, manifest, Some(base_path.join(normalize_string(format!("{}.{}", title.replace("/", "-").replace("\\", "-"), mime_type.get_file_extension())))));
 
         self.enqueue(download);
 

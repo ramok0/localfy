@@ -2,8 +2,8 @@ use std::{sync::{Arc, Mutex}, ops::Deref, path::PathBuf, collections::VecDeque};
 
 use rand::seq::SliceRandom;
 use vlc::{Instance, MediaPlayer, Media};
-
-use crate::{app::AppImpl, database::Song, gui::model::{DrawableSong, DrawableSongArray}};
+use crate::song::Song;
+use crate::{app::AppImpl, gui::model::{DrawableSong, DrawableSongArray}};
 use vlc::MediaPlayerAudioEx;
 
 pub struct PlayerQueue {
@@ -158,8 +158,8 @@ pub enum PlaybackMode {
 }
 
 pub struct PlayerImpl {
-    pub instance:Arc<Instance>,
-    pub media_player: Arc<vlc::MediaPlayer>,
+    pub instance:Instance,
+    pub media_player: vlc::MediaPlayer,
     pub per_song_gui_settings:Mutex<PerSongGuiSettings>,
     pub queue:Mutex<PlayerQueue>,
     pub event_manager:(std::sync::mpsc::Sender<vlc::EventType>, std::sync::mpsc::Receiver<vlc::EventType>)
@@ -172,8 +172,8 @@ impl PlayerImpl {
         let event_manager = std::sync::mpsc::channel::<vlc::EventType>();
 
         let player = PlayerImpl {
-            instance: Arc::new(instance),
-            media_player: Arc::new(media_player),
+            instance: instance,
+            media_player: media_player,
             per_song_gui_settings: Mutex::new(PerSongGuiSettings::default()),
             queue: Mutex::new(PlayerQueue::default()),
             event_manager

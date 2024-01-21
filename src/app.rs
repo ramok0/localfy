@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use tidal_rs::client::TidalApi;
 
-use crate::{download::DownloadManager, configuration::Configuration, gui::model::GuiInput, database::DatabaseWrapper, player::{Player, PlayerImpl}, cache::CacheManager};
+use crate::{download::DownloadManager, configuration::Configuration, gui::model::GuiInput, database::Database, player::{Player, PlayerImpl}, cache::CacheManager};
 
 pub struct UserSettings {
     pub volume: i32,
@@ -35,7 +35,7 @@ pub struct AppImpl {
     pub tidal_client: TidalApi,
     pub download_manager: DownloadManager,
     pub configuration: Arc<Mutex<Configuration>>,
-    pub database:DatabaseWrapper,
+    pub database:Mutex<Database>,
     pub cache_manager:Arc<tokio::sync::Mutex<CacheManager>>,
     pub player: Player
 }
@@ -49,13 +49,17 @@ impl AppImpl {
             player: Player::new(),
             download_manager: DownloadManager::new(10),
             configuration: Arc::new(Mutex::new(configuration)),
-            database: DatabaseWrapper::new(),
+            database: Mutex::new(Database::new()),
             cache_manager: Arc::new(tokio::sync::Mutex::new(CacheManager::new()))
         };
 
         app.download_manager.work();
 
         app
+    }
+
+    pub fn database(&self) -> std::sync::MutexGuard<'_, Database, > {
+        self.database.lock().unwrap()
     }
 }
 

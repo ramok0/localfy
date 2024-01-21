@@ -28,7 +28,11 @@ impl eframe::App for crate::app::App {
             self.app.player.tick();
         }
 
-        let songs = self.app.database.songs().get_songs();
+        let songs = {
+            self.app.database().songs().get_songs()
+        };
+
+
         let mut hasher = DefaultHasher::new();
         songs.hash(&mut hasher);
         let song_array_hash = hasher.finish();

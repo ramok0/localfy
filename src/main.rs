@@ -12,6 +12,7 @@ pub mod configuration;
 pub mod player;
 pub mod time;
 pub mod cache;
+pub mod playlist;
 
 #[tokio::main]
 async fn main() -> Result<(), eframe::Error> {

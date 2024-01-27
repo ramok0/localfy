@@ -33,10 +33,11 @@ impl CacheManager {
                 for entry in entries {
                     if let Ok(entry) = entry {
                         let path = entry.path();
-                        let hash = path.file_name().unwrap().to_str().unwrap().parse::<u64>().unwrap();
-                        let data = std::fs::read(&path).unwrap();
+                        if let Ok(hash) = path.file_name().unwrap().to_str().unwrap().parse::<u64>() {
+                            let data = std::fs::read(&path).unwrap();
 
-                        result.items.insert(hash, CachedObject::new(data, path));
+                            result.items.insert(hash, CachedObject::new(data, path));
+                        }
                     }
                 }
             }

@@ -1,7 +1,7 @@
-use std::{sync::Arc, hash::{Hash, Hasher}, collections::hash_map::DefaultHasher, time::Instant};
+use std::{sync::{atomic::AtomicBool, Arc}, hash::{Hash, Hasher}, collections::hash_map::DefaultHasher, time::Instant};
 
 use egui::{ ColorImage, TextureOptions, TextureId };
-use tidal_rs::model::{ self, Track, Album, Artist, SearchResult, SearchType };
+use tidal_rs::model::{ self, Album, Artist, DeviceAuth, SearchResult, SearchType, Track };
 
 use crate::cache::CacheManager;
 use crate::song::Song;
@@ -10,7 +10,9 @@ use super::page::RenderablePage;
 #[derive(PartialEq)]
 pub enum Event {
     SearchResult(DrawableSearchResult),
-    SongArray(DrawableSongArray)
+    SongArray(DrawableSongArray),
+    DeviceCode(Option<DeviceAuth>),
+    LogonWithTidal
 }
 
 pub enum Pages {
@@ -391,7 +393,10 @@ pub struct GuiInput {
     pub page:Pages,
     pub last_songs_update:Option<Instant>,
     pub is_searching:bool,
-    pub location:UserLocation
+    pub location:UserLocation,
+    pub should_restart:bool,
+    pub is_logging_in:bool,
+    pub device_code:Option<DeviceAuth>
 }
 
 impl Default for GuiInput {
@@ -405,7 +410,10 @@ impl Default for GuiInput {
             page: Pages::Home,
             last_songs_update: None,
             is_searching: false,
-            location: UserLocation::Home
+            location: UserLocation::Home,
+            should_restart: false,
+            is_logging_in: false,
+            device_code: None
         }
     }
 }

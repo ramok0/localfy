@@ -90,7 +90,7 @@ impl DownloadState {
 
 impl Download {
     pub fn new(app:Arc<AppImpl>, track:Track, manifest:PlaybackManifest, path:Option<PathBuf>) -> Self {
-        let path = path.unwrap_or(Self::old_file_path(track.clone(), manifest.clone()));
+        let path = path.expect("Path is required");
 
         Download {
             app,
@@ -108,22 +108,10 @@ impl Download {
         &self.manifest
     }
 
-    pub fn old_file_path(track:Track, manifest:PlaybackManifest) -> PathBuf {
-        let filename = format!("{} - {}.{}", track.get_artist().name, track.title, manifest.mime_type.get_file_extension());
-        
-        if let Ok(programdata) = env::var("PROGRAMDATA") {
-            let path = format!("{}\\Localfy\\{}", programdata, filename);
 
-            return PathBuf::from(path);
-        }
-
-        PathBuf::from(filename)
-    }
 
     pub fn on_finished(&self) {
-        let mut database = self.app.database.lock().unwrap();
-        database.songs().add_song(Song::new_with_track(self.path.clone(), self.track.clone()));
-        database.flush();
+        self.app.database().songs().add_song(Song::new_with_track(self.path.clone(), self.track.clone()));
     }
 }
 
@@ -180,7 +168,6 @@ impl DownloadManager {
         }
 
         if !base_path.exists() {
-            
             if std::fs::create_dir_all(&base_path).is_err() {
                 dbg!("Failed to create directory : {}", base_path.clone());
             }

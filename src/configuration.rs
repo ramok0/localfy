@@ -7,7 +7,9 @@ use tidal_rs::model::AudioQuality;
 pub struct Configuration {
     pub refresh_token:Option<String>,
     pub base_download_folder:Option<PathBuf>,
-    pub quality: Option<AudioQuality>
+    pub quality: Option<AudioQuality>,
+    #[serde(default)]
+    pub max_concurrency: usize
 }
 
 impl Default for Configuration {
@@ -15,7 +17,8 @@ impl Default for Configuration {
         Configuration {
             refresh_token:None,
             base_download_folder: None,
-            quality: None
+            quality: None,
+            max_concurrency: 10
         }
     }
 }
@@ -27,6 +30,14 @@ impl Configuration {
 
     pub fn get_refresh_token(&self) -> Option<String> {
         self.refresh_token.clone()
+    }
+
+    pub fn max_concurrency(&self) -> usize {
+        self.max_concurrency
+    }
+
+    pub fn set_max_concurrency(&mut self, max_concurrency:usize) -> () {
+        self.max_concurrency = max_concurrency;
     }
 
     pub fn get_base_download_folder(&self) -> PathBuf {

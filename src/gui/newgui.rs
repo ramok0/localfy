@@ -8,6 +8,20 @@ use super::model::{Event, DrawableSongArray};
 
 impl eframe::App for crate::app::App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        {
+            let mut db = self.app.database();
+            let new_hash = db.inner.hash();
+            if db.last_save_hash() != new_hash && db.last_save_time().elapsed().as_secs() > 2 {
+                if cfg!(debug_assertions) {
+                    println!("Saving database...");
+                }
+                db.flush();
+                if cfg!(debug_assertions) {
+                    println!("Saved");
+                }
+            }
+        }
+
         if let Ok(event) = self.gui_settings.event_manager.1.try_recv() {
             match event {
                 Event::SearchResult(tracks) => {
@@ -20,7 +34,18 @@ impl eframe::App for crate::app::App {
                     {
                         self.app.player.queue().set_library(song_array);
                     }
-                }
+                },
+                Event::DeviceCode(device_code) => {
+                    if device_code.is_none() {
+                        self.gui_settings.is_logging_in = false;
+                    }
+
+                    self.gui_settings.device_code = device_code;
+                },
+                Event::LogonWithTidal => {
+                    self.gui_settings.is_logging_in = false;
+                    self.gui_settings.should_restart = true;
+                },
             }
         }
 

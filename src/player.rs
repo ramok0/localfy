@@ -76,7 +76,7 @@ impl PlayerQueue {
             self.current_index.and_then(|index| {
 
                 let inarray_index = if self.playback_mode == PlaybackMode::Shuffle {
-                    self.shuffle_positions[index+1]
+                    *self.shuffle_positions.get(index+1).unwrap_or(&0)
                 } else {
                     index+1
                 };

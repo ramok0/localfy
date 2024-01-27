@@ -2,6 +2,7 @@
 use egui::{Rect, Layout, ScrollArea, Image, Vec2, vec2};
 use tidal_rs::model::{SearchResult, SearchType};
 use crate::{app::{App}, gui::model::{DrawableSearchResult, Event, Drawable}};
+use tokio::task;
 
 impl App {
     pub fn draw_search_page(&mut self, ui:&mut egui::Ui, max_rect:Rect) {
@@ -78,19 +79,21 @@ impl App {
                                     let drawable_artist = artist.clone();
 
                                     tokio::spawn(async move {
-                                        let quality = app.tidal_client
-                                        .user()
-                                        .get_current_account_highest_sound_quality().await
-                                        .unwrap();
+                                        let quality = app.get_quality_or_highest_avaliable();
 
                                         let mut albums = app.tidal_client.media().get_artist_albums(drawable_artist.get_item().id, None).await.unwrap_or(vec![]);
                                         let singles = app.tidal_client.media().get_artist_singles(drawable_artist.get_item().id, None).await.unwrap_or(vec![]);
 
                                         albums.extend(singles.into_iter());
-
-                                        for album in albums {
-                                            let _ = app.download_manager.enqueue_album(app.clone(), album, quality).await;
-                                        }
+                                        
+                                        albums.iter().for_each(|album| {
+                                            let app = app.clone();
+                                            let album = album.clone();
+                                            task::spawn(async move {
+                                                let _ = app.download_manager.enqueue_album(app.clone(), album, quality).await;
+                                            });
+                                        });
+                    
                                     });
                                 }
                             });
@@ -107,10 +110,7 @@ impl App {
                                     let app = self.app.clone();
                                     let track = track.clone();
                                     tokio::spawn(async move {
-                                        let quality = app.tidal_client
-                                            .user()
-                                            .get_current_account_highest_sound_quality().await
-                                            .unwrap();
+                                        let quality = app.get_quality_or_highest_avaliable();
 
                                         let _ = app.download_manager.enqueue_single(app.clone(), quality, track.get_item()).await;
                                     });
@@ -126,15 +126,11 @@ impl App {
                                 );
                                 ui.label(format!("{}", album.get_title()));
                                 if ui.button("Download").clicked() {
-                                    let mut app = self.app.clone();
+                                    let app = self.app.clone();
                                     let drawable_album = album.clone();
 
                                     tokio::spawn(async move {
-                                        let quality = app.tidal_client
-                                            .user()
-                                            .get_current_account_highest_sound_quality().await
-                                            .unwrap();
-
+                                        let quality = app.get_quality_or_highest_avaliable();
                                         let _ = app.download_manager.enqueue_album(app.clone(), drawable_album.get_item(), quality).await;
                                     });
                    

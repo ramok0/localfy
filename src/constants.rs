@@ -7,5 +7,6 @@ pub const ACTION_COLOR:Color32 = Color32::from_rgb(0x1f, 0xdf, 0x64);
 pub const SECONDARY_ACTION_COLOR:Color32 = Color32::from_rgb(0x9f,0x9f, 0x9f);
 pub const SECONDARY_ACTION_COLOR_HOVER:Color32 = Color32::from_rgb(0xff,0xff, 0xff);
 pub const SECONDARY_HOVER_COLOR:Color32 = Color32::from_rgb(0x1d, 0xb9, 0x54);
+pub const WARNING_COLOR:Color32 = Color32::from_rgb(0xff, 0x7f, 0x00);
 
 pub const CONTROLS_SIZE_PERCENT:f32 = 0.1;

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{song::Song, database::DatabaseData, gui::model::DrawableSong, cache::CacheManager};
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, Hash, serde::Deserialize)]
 pub struct Playlist {
     pub name:String,
     pub songs:Vec<u64> // Vec to hashes of songs to gain performance and reduce database size
@@ -20,9 +20,8 @@ impl DrawablePlaylist {
 
         let songs = {
             let data = database.lock().unwrap();
-            playlist.songs.iter().map(|hash| {
-                let song = data.tracks().iter().find(|x| x.hash == *hash).unwrap();
-                song.song.clone()
+            playlist.songs.iter().filter_map(|hash| {
+                data.tracks_full().get(hash).cloned()
             }).collect::<Vec<Song>>()
         };
 

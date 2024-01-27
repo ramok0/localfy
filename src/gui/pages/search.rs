@@ -58,28 +58,42 @@ impl App {
 
             ScrollArea::new([false, true]).show(&mut ui, |ui| {
 
-              //  let items:Box<dyn Drawable> 
 
-                match self.gui_settings.search_type {
+                let items:Vec<Box<dyn Drawable + Send + Sync>> = match self.gui_settings.search_type {
                     SearchType::Artist => {
-                        self.gui_settings.search_results.artists.iter().for_each(|artist| {
-                            ui.horizontal(|ui| {
-                                ui.add(
-                                    Image::new(artist.get_texture()).fit_to_exact_size(
-                                        vec2(35., 35.)
-                                    )
-                                );
-                                ui.label(format!("{}", artist.get_title()));
-                                if ui.button("Download").clicked() {
-                                    let app = self.app.clone();
-                                    let drawable_artist = artist.clone();
+                        self.gui_settings.search_results.artists.clone().into_iter().map(|x| Box::new(x) as Box<dyn Drawable + Send + Sync>).collect()
+                    },
+                    SearchType::Track => {
+                        self.gui_settings.search_results.tracks.clone().into_iter().map(|x| Box::new(x) as Box<dyn Drawable+ Send + Sync>).collect()
+                    },
+                    SearchType::Album => {
+                        self.gui_settings.search_results.albums.clone().into_iter().map(|x| Box::new(x) as Box<dyn Drawable+ Send + Sync>).collect()
+                    },
+                    SearchType::Playlist => {
+                        vec![]
+                    }
+                };
 
+                items.into_iter().for_each(|item| {
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            Image::new(item.get_texture()).fit_to_exact_size(
+                                vec2(35., 35.)
+                            )
+                        );
+                        ui.label(item.get_title());
+                        if ui.button("Download").clicked() {
+                            let app = self.app.clone();
+          
+
+                            match self.gui_settings.search_type {
+                                SearchType::Artist => {
                                     tokio::spawn(async move {
                                         let quality = app.get_quality_or_highest_avaliable();
-
-                                        let mut albums = app.tidal_client.media().get_artist_albums(drawable_artist.id, None).await.unwrap_or(vec![]);
-                                        let singles = app.tidal_client.media().get_artist_singles(drawable_artist.id, None).await.unwrap_or(vec![]);
-
+        
+                                        let mut albums = app.tidal_client.media().get_artist_albums(item.id(), None).await.unwrap_or(vec![]);
+                                        let singles = app.tidal_client.media().get_artist_singles(item.id(), None).await.unwrap_or(vec![]);
+        
                                         albums.extend(singles.into_iter());
                                         
                                         albums.iter().for_each(|album| {
@@ -91,51 +105,104 @@ impl App {
                                         });
                     
                                     });
-                                }
-                            });
-                        });
-                    }
-                    SearchType::Track => {
-                        self.gui_settings.search_results.tracks.iter().for_each(|track| {
-                            ui.horizontal(|ui| {
-                                ui.add(
-                                    Image::new(track.get_texture()).fit_to_exact_size(vec2(35., 35.))
-                                );
-                                ui.label(track.get_title());
-                                if ui.button("Download").clicked() {
-                                    let app = self.app.clone();
-                                    let track = track.clone();
+                                },
+                                SearchType::Track => {
                                     tokio::spawn(async move {
                                         let quality = app.get_quality_or_highest_avaliable();
-
-                                        let _ = app.download_manager.enqueue_single(app.clone(), quality, track).await;
+                                        let _ = app.download_manager.enqueue_single(app.clone(), quality, item.get_track().unwrap()).await;
                                     });
-                                }
-                            });
-                        });
-                    }
-                    SearchType::Album => {
-                        self.gui_settings.search_results.albums.iter().for_each(|album| {
-                            ui.horizontal(|ui| {
-                                ui.add(
-                                    Image::new(album.get_texture()).fit_to_exact_size(vec2(35., 35.))
-                                );
-                                ui.label(format!("{}", album.get_title()));
-                                if ui.button("Download").clicked() {
-                                    let app = self.app.clone();
-                                    let drawable_album = album.clone();
-
+                                },
+                                SearchType::Album => {
                                     tokio::spawn(async move {
                                         let quality = app.get_quality_or_highest_avaliable();
-                                        let _ = app.download_manager.enqueue_album(app.clone(), drawable_album, quality).await;
+                                        let _ = app.download_manager.enqueue_album(app.clone(), item.get_album().unwrap(), quality).await;
                                     });
+                                },
+                                SearchType::Playlist => todo!(),
+                            }
+
+              
+                        }
+                    });
+                });
+
+                // match self.gui_settings.search_type {
+                //     SearchType::Artist => {
+                //         self.gui_settings.search_results.artists.iter().for_each(|artist| {
+                //             ui.horizontal(|ui| {
+                //                 ui.add(
+                //                     Image::new(artist.get_texture()).fit_to_exact_size(
+                //                         vec2(35., 35.)
+                //                     )
+                //                 );
+                //                 ui.label(format!("{}", artist.get_title()));
+                //                 if ui.button("Download").clicked() {
+                //                     let app = self.app.clone();
+                //                     let drawable_artist = artist.clone();
+
+                //                     tokio::spawn(async move {
+                //                         let quality = app.get_quality_or_highest_avaliable();
+
+                //                         let mut albums = app.tidal_client.media().get_artist_albums(drawable_artist.id, None).await.unwrap_or(vec![]);
+                //                         let singles = app.tidal_client.media().get_artist_singles(drawable_artist.id, None).await.unwrap_or(vec![]);
+
+                //                         albums.extend(singles.into_iter());
+                                        
+                //                         albums.iter().for_each(|album| {
+                //                             let app = app.clone();
+                //                             let album = album.clone();
+                //                             task::spawn(async move {
+                //                                 let _ = app.download_manager.enqueue_album(app.clone(), album, quality).await;
+                //                             });
+                //                         });
+                    
+                //                     });
+                //                 }
+                //             });
+                //         });
+                //     }
+                //     SearchType::Track => {
+                //         self.gui_settings.search_results.tracks.iter().for_each(|track| {
+                //             ui.horizontal(|ui| {
+                //                 ui.add(
+                //                     Image::new(track.get_texture()).fit_to_exact_size(vec2(35., 35.))
+                //                 );
+                //                 ui.label(track.get_title());
+                //                 if ui.button("Download").clicked() {
+                //                     let app = self.app.clone();
+                //                     let track = track.clone();
+                //                     tokio::spawn(async move {
+                //                         let quality = app.get_quality_or_highest_avaliable();
+
+                //                         let _ = app.download_manager.enqueue_single(app.clone(), quality, track).await;
+                //                     });
+                //                 }
+                //             });
+                //         });
+                //     }
+                //     SearchType::Album => {
+                //         self.gui_settings.search_results.albums.iter().for_each(|album| {
+                //             ui.horizontal(|ui| {
+                //                 ui.add(
+                //                     Image::new(album.get_texture()).fit_to_exact_size(vec2(35., 35.))
+                //                 );
+                //                 ui.label(format!("{}", album.get_title()));
+                //                 if ui.button("Download").clicked() {
+                //                     let app = self.app.clone();
+                //                     let drawable_album = album.clone();
+
+                //                     tokio::spawn(async move {
+                //                         let quality = app.get_quality_or_highest_avaliable();
+                //                         let _ = app.download_manager.enqueue_album(app.clone(), drawable_album, quality).await;
+                //                     });
                    
-                                }
-                            });
-                        });
-                    }
-                    SearchType::Playlist => (),
-                }
+                //                 }
+                //             });
+                //         });
+                //     }
+                //     SearchType::Playlist => (),
+                // }
+            
             });
         }
     }

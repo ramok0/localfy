@@ -1,5 +1,5 @@
-use egui::{vec2, Color32, Layout, ProgressBar, Rect, Rounding, ScrollArea};
-use crate::{app::App, constants::BACKGROUND_COLOR,  download::DownloadStatus};
+use egui::{vec2, Color32, Image, Layout, ProgressBar, Rect, Rounding, ScrollArea};
+use crate::{app::App, constants::BACKGROUND_COLOR, download::DownloadStatus, renderer::Drawable};
 
 impl App {
     pub fn draw_downloads_page(&mut self, ui:&mut egui::Ui, max_rect:Rect) {
@@ -27,6 +27,7 @@ impl App {
             downloads.iter().for_each(|download| {
                 let res = download_ui.scope(|ui| {
                     ui.horizontal(|ui| {
+                        ui.add(Image::new(download.download.track.get_texture()).rounding(Rounding::same(15.)).fit_to_exact_size(vec2(30., 30.)));
                         ui.label(format!("{} - {}", download.download.track.title, download.download.track.get_artist().name));
                         
                   //      progress_bar(ui, download.progress, vec2(ui.available_width() - ui.spacing().item_spacing.x, 30.));

@@ -25,6 +25,9 @@ impl eframe::App for crate::app::App {
         if let Ok(event) = self.gui_settings.event_manager.1.try_recv() {
             match event {
                 Event::SearchResult(tracks) => {
+
+                    
+
                     self.gui_settings.search_results = tracks;
                     self.gui_settings.is_searching = false;
                 },

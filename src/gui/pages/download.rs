@@ -1,5 +1,5 @@
-use egui::{Rect, Layout, vec2, Rounding, ScrollArea};
-use crate::{app::App, constants::BACKGROUND_COLOR, gui::progress_bar::progress_bar, download::DownloadStatus};
+use egui::{vec2, Color32, Layout, ProgressBar, Rect, Rounding, ScrollArea};
+use crate::{app::App, constants::BACKGROUND_COLOR,  download::DownloadStatus};
 
 impl App {
     pub fn draw_downloads_page(&mut self, ui:&mut egui::Ui, max_rect:Rect) {
@@ -29,7 +29,9 @@ impl App {
                     ui.horizontal(|ui| {
                         ui.label(format!("{} - {}", download.download.track.title, download.download.track.get_artist().name));
                         
-                        progress_bar(ui, download.progress, vec2(ui.available_width() - ui.spacing().item_spacing.x, 30.));
+                  //      progress_bar(ui, download.progress, vec2(ui.available_width() - ui.spacing().item_spacing.x, 30.));
+
+                        ui.add(ProgressBar::new(download.progress).animate(true).show_percentage().fill(Color32::from_rgb(0x1b, 0x6f, 0x06)));
                     });
                 }).response;
     

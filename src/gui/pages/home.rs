@@ -1,4 +1,4 @@
-use egui::{Rect, Layout, ScrollArea};
+use egui::{vec2, Image, Layout, Rect, ScrollArea, Widget};
 use crate::{app::App, gui::song::draw_song};
 
 impl App {
@@ -6,12 +6,11 @@ impl App {
         let mut ui = ui.child_ui(max_rect, Layout::default());
 
         ui.label("Home Page");
-
         ScrollArea::new([false, true]).show(&mut ui, |ui| {
             let height = ui.available_height();
             
             let playlist = {
-                self.app.player.queue().get_playlist().clone()
+                self.app.database().songs().get_songs().clone()
             };
 
             playlist.iter().for_each(|song| {

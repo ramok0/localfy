@@ -17,17 +17,14 @@ use egui::{
     ImageSource,
 };
 use crate::{
-    app::App,
-    constants::{
+    app::App, constants::{
         TEXT_COLOR_SECONDARY,
         TEXT_COLOR,
         SECONDARY_ACTION_COLOR,
         SECONDARY_ACTION_COLOR_HOVER,
         SECONDARY_HOVER_COLOR,
-    },
-    gui::{ helper, model::DrawableSong }, player::PlaybackMode,
+    }, gui::{ helper }, player::PlaybackMode, renderer::Drawable, song::Song
 };
-use crate::gui::model::Drawable;
 
 const CONTROLS_ICONS_DISTANCE: f32 = 30.0;
 
@@ -66,7 +63,7 @@ impl App {
         );
 
         ui.scope(|ui| {
-            let current_title_opt: Option<DrawableSong> = {
+            let current_title_opt: Option<Song> = {
                 self.app.player.queue().get_current_title()
             }; //self.player.queue().current_title();
             if current_title_opt.is_some() {

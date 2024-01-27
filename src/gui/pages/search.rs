@@ -1,7 +1,7 @@
 
 use egui::{Rect, Layout, ScrollArea, Image, Vec2, vec2};
 use tidal_rs::model::{SearchResult, SearchType};
-use crate::{app::{App}, gui::model::{DrawableSearchResult, Event, Drawable}};
+use crate::{app::{App}, gui::model::Event, renderer::Drawable};
 use tokio::task;
 
 impl App {
@@ -14,7 +14,7 @@ impl App {
 
             if ui.button("Clear").clicked() {
                 self.gui_settings.search_query.clear();
-                self.gui_settings.search_results = DrawableSearchResult::new();
+                self.gui_settings.search_results = SearchResult::new();
             }
 
             ui.button("Search")
@@ -27,19 +27,12 @@ impl App {
             let ctx = ui.ctx().clone();
             self.gui_settings.is_searching = true;
             self.gui_settings.search_results.clear();
-            let cache_manager = self.app.cache_manager.clone();
             tokio::spawn(async move {
                 let result: Result<SearchResult, tidal_rs::error::Error> = tidal_client
                     .search()
                     .all(&search_query, Some(20)).await;
                 if let Ok(search_result) = result {
-                    let result = DrawableSearchResult::from_search_result(
-                        &ctx,
-                        &search_result,
-                        cache_manager
-                    ).await;
-
-                    let _ = tx.send(Event::SearchResult(result)).await;
+                    let _ = tx.send(Event::SearchResult(search_result)).await;
                 }
             });
         }

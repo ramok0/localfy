@@ -1,10 +1,10 @@
-use std::{sync::{Arc, Mutex}, collections::{VecDeque, HashMap}, time::{Duration, Instant}, env, path::PathBuf};
+use std::{sync::{Arc, Mutex}, collections::{VecDeque, HashMap}, time::{Duration, Instant},  path::PathBuf};
 
 use tidal_rs::model::{Track, PlaybackManifest, Album, AudioQuality};
 use tokio::task;
 use tokio::io::AsyncWriteExt;
 
-use crate::{app::AppImpl};
+use crate::app::AppImpl;
 use crate::song::Song;
 
 #[derive(Clone)]
@@ -31,7 +31,7 @@ impl ToString for DownloadStatus {
             DownloadStatus::Queued => "Queued".to_string(),
             DownloadStatus::Downloading => "Downloading".to_string(),
             DownloadStatus::Finished => "Finished".to_string(),
-            DownloadStatus::Failed(Message) => format!("Failed with message : {}", Message)
+            DownloadStatus::Failed(message) => format!("Failed with message : {}", message)
         }
     }
 

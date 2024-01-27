@@ -13,6 +13,7 @@ pub mod player;
 pub mod time;
 pub mod cache;
 pub mod playlist;
+pub mod renderer;
 
 #[tokio::main]
 async fn main() -> Result<(), eframe::Error> {
@@ -54,7 +55,6 @@ async fn main() -> Result<(), eframe::Error> {
             cc.egui_ctx.style_mut(|style| {
                 style.visuals.selection.bg_fill = Color32::WHITE;
             });
-
 
             egui_extras::install_image_loaders(&cc.egui_ctx);
 

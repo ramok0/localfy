@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use tidal_rs::{client::TidalApi, model::AudioQuality};
 
-use crate::{download::DownloadManager, configuration::Configuration, gui::model::GuiInput, database::{DatabaseImpl, Database}, player::{Player, PlayerImpl}, cache::CacheManager};
+use crate::{download::DownloadManager, configuration::Configuration, gui::model::GuiInput, database::Database, player::Player, cache::CacheManager};
 
 pub struct UserSettings {
     pub volume: i32,
@@ -52,6 +52,8 @@ impl AppImpl {
             database: Mutex::new(Database::new()),
             cache_manager: Arc::new(tokio::sync::Mutex::new(CacheManager::new()))
         };
+
+
 
         app.download_manager.work();
 

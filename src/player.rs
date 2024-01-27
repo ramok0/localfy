@@ -1,17 +1,16 @@
-use std::{sync::{Arc, Mutex}, ops::Deref, path::PathBuf, collections::VecDeque};
+use std::{sync::{Arc, Mutex}, ops::Deref, collections::VecDeque};
 
 use rand::seq::SliceRandom;
 use vlc::{Instance, MediaPlayer, Media};
 use crate::song::Song;
-use crate::{app::AppImpl, gui::model::{DrawableSong, DrawableSongArray}};
 use vlc::MediaPlayerAudioEx;
 
 pub struct PlayerQueue {
     pub current_index: Option<usize>,
-    pub current_title:Option<DrawableSong>,
-    pub playlist:Vec<DrawableSong>,
-    pub queue:VecDeque<DrawableSong>, //one time queue
-    pub library:DrawableSongArray, //every songs
+    pub current_title:Option<Song>,
+    pub playlist:Vec<Song>,
+    pub queue:VecDeque<Song>, //one time queue
+    pub library:Vec<Song>, //every songs
     pub shuffle_positions:Vec<usize>,
     pub playback_mode:PlaybackMode,
     /* 
@@ -28,7 +27,7 @@ impl Default for PlayerQueue {
             current_title:None,
             playlist: Vec::new(),
             queue: VecDeque::new(),
-            library: DrawableSongArray::new(),
+            library: Vec::new(),
             current_index: None,
             shuffle_positions: Vec::new(),
             playback_mode: PlaybackMode::Normal
@@ -37,30 +36,30 @@ impl Default for PlayerQueue {
 }
 
 impl PlayerQueue {
-    pub fn set_library(&mut self, songs:DrawableSongArray) {
+    pub fn set_library(&mut self, songs:Vec<Song>) {
         self.library = songs;
     }
 
-    pub fn get_library(&self) -> &DrawableSongArray {
+    pub fn get_library(&self) -> &Vec<Song> {
         &self.library
     }
 
-    pub fn set_current_media(&mut self, song:Option<&DrawableSong>) {
+    pub fn set_current_media(&mut self, song:Option<&Song>) {
         self.current_title = song.cloned();
     }
 
-    pub fn add_to_queue(&mut self, song:&DrawableSong) {
+    pub fn add_to_queue(&mut self, song:&Song) {
         self.queue.push_back(song.clone());
     }
 
-    pub fn set_playlist(&mut self, songs:&Vec<DrawableSong>) {
+    pub fn set_playlist(&mut self, songs:&Vec<Song>) {
         self.playlist = songs.clone();
 
         //when playlist change, shuffle positions should change too.
         self.generate_shuffle_positions();
     }
 
-    pub fn get_playlist(&self) -> &Vec<DrawableSong> {
+    pub fn get_playlist(&self) -> &Vec<Song> {
         &self.playlist
     }
 
@@ -71,7 +70,7 @@ impl PlayerQueue {
         self.shuffle_positions = shuffle_positions;
     }
 
-    pub fn get_next_song(&mut self) -> Option<DrawableSong> {
+    pub fn get_next_song(&mut self) -> Option<Song> {
         self.queue.pop_front().or_else(|| {
             self.current_index.and_then(|index| {
 
@@ -95,7 +94,7 @@ impl PlayerQueue {
     }
 
 
-    pub fn get_previous_song(&mut self) -> Option<DrawableSong> {
+    pub fn get_previous_song(&mut self) -> Option<Song> {
         self.current_index.and_then(|index| {
 
             let inarray_index = if self.playback_mode == PlaybackMode::Shuffle {
@@ -116,7 +115,7 @@ impl PlayerQueue {
         }).cloned()
     }
 
-    pub fn get_current_title(&self) -> Option<DrawableSong> {
+    pub fn get_current_title(&self) -> Option<Song> {
         self.current_title.clone()
     }
 }
@@ -289,8 +288,8 @@ impl PlayerImpl {
         let _ = self.media_player.set_volume(volume);
     }
 
-    pub fn play_song(&self, song:&DrawableSong) -> Result<(), tidal_rs::error::Error> {
-        let media = Media::new_path(&self.instance, song.song.path.clone()).ok_or(tidal_rs::error::Error::NotFound)?;
+    pub fn play_song(&self, song:&Song) -> Result<(), tidal_rs::error::Error> {
+        let media = Media::new_path(&self.instance, song.path.clone()).ok_or(tidal_rs::error::Error::NotFound)?;
         self.media_player.set_media(&media);
 
         *self.per_song_gui_settings.lock().unwrap() = PerSongGuiSettings::default();
@@ -304,13 +303,13 @@ impl PlayerImpl {
         Ok(())
     }
 
-    pub fn set_media(&self, song:&DrawableSong, override_index:bool) -> Result<(), tidal_rs::error::Error>{
+    pub fn set_media(&self, song:&Song, override_index:bool) -> Result<(), tidal_rs::error::Error>{
         self.play_song(&song)?;
         {   
 
              if override_index {
                  let mut queue = self.queue();
-             queue.current_index = queue.playlist.iter().position(|x| x.song == song.song);
+             queue.current_index = queue.playlist.iter().position(|x| x == song);
              }
 
         }

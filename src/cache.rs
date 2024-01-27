@@ -1,6 +1,7 @@
-use std::{path::PathBuf, hash::{Hash, Hasher}, collections::hash_map::DefaultHasher, fs::File};
+use std::{collections::hash_map::DefaultHasher, fs::File, hash::{Hash, Hasher}, io::Read, path::PathBuf, sync::Arc};
 use std::io::Write;
-use egui::ahash::{HashMap, HashMapExt};
+use egui::{ahash::{HashMap, HashMapExt}, load::Bytes, ImageSource};
+use image::EncodableLayout;
 
 pub struct CachedObject {
     pub data:Vec<u8>,
@@ -44,6 +45,26 @@ impl CacheManager {
         }
 
         result
+    }
+
+    pub fn source_from_id<'a>(id:String) -> Option<ImageSource<'a>>
+    {
+        let id = id.parse::<u64>().ok()?;
+        let path = Self::get_path_for_hash(id);
+
+        dbg!(&path);
+
+        if path.exists() {
+            let data = std::fs::read(&path).unwrap();
+
+            Some(ImageSource::Bytes { uri: format!("bytes://{id}").into(), bytes: Bytes::Shared(Arc::from(data.as_bytes())) })
+        } else {
+            None
+        }
+    }
+
+    pub fn get_default_cover() -> ImageSource<'static> {
+        ImageSource::Bytes { uri: "bytes://defaultcover.svg".into(), bytes: Bytes::Static(include_bytes!("../assets/missing.svg")) }
     }
 
     fn get_base_path() -> PathBuf {

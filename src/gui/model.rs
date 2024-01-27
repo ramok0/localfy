@@ -1,4 +1,4 @@
-use std::{time::Instant};
+use std::time::Instant;
 
 
 use tidal_rs::model::{ DeviceAuth, SearchResult, SearchType };

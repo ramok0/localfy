@@ -11,7 +11,7 @@ use crate::song::Song;
 
 
 pub fn draw_song(app:&App, ui:&mut egui::Ui, song:&Song, height:f32) {
-    if let Some(last_rect) = ui.memory_mut(|mem| mem.data.get_temp(Id::new(song.get_item()))) {
+    if let Some(last_rect) = ui.memory_mut(|mem| mem.data.get_temp(Id::new(song))) {
         ui.painter().rect_filled(last_rect, Rounding::same(5.), constants::BACKGROUND_COLOR);
     }
     let last_item_spacing = ui.style_mut().spacing.item_spacing;
@@ -51,7 +51,7 @@ pub fn draw_song(app:&App, ui:&mut egui::Ui, song:&Song, height:f32) {
     });
 
     ui.style_mut().spacing.item_spacing = last_item_spacing;
-    ui.memory_mut(|mem: &mut egui::Memory| mem.data.insert_temp(Id::new(song.get_item()), response.response.rect.expand(10.)));
+    ui.memory_mut(|mem: &mut egui::Memory| mem.data.insert_temp(Id::new(song), response.response.rect.expand(10.)));
 
     if response.response.clicked() {
         let _ = app.app.player.set_media(&song, true);

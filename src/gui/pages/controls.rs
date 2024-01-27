@@ -112,7 +112,7 @@ impl App {
                 );
 
                 let artist_font = FontId::proportional(font.size - 5.0);
-                let artist = current_title.get_item().artist;
+                let artist = current_title.artist;
 
                 let artist_name_pos = pos2(title_min.x, title_min.y + 15.0);
 

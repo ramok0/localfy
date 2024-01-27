@@ -1,7 +1,7 @@
 
 use egui::{Rect, Layout, ScrollArea, Image, vec2};
 use tidal_rs::model::{SearchResult, SearchType};
-use crate::{app::{App}, gui::model::Event, renderer::Drawable};
+use crate::{app::App, gui::model::Event, renderer::Drawable};
 use tokio::task;
 
 impl App {
@@ -57,6 +57,9 @@ impl App {
             });
 
             ScrollArea::new([false, true]).show(&mut ui, |ui| {
+
+              //  let items:Box<dyn Drawable> 
+
                 match self.gui_settings.search_type {
                     SearchType::Artist => {
                         self.gui_settings.search_results.artists.iter().for_each(|artist| {
@@ -74,8 +77,8 @@ impl App {
                                     tokio::spawn(async move {
                                         let quality = app.get_quality_or_highest_avaliable();
 
-                                        let mut albums = app.tidal_client.media().get_artist_albums(drawable_artist.get_item().id, None).await.unwrap_or(vec![]);
-                                        let singles = app.tidal_client.media().get_artist_singles(drawable_artist.get_item().id, None).await.unwrap_or(vec![]);
+                                        let mut albums = app.tidal_client.media().get_artist_albums(drawable_artist.id, None).await.unwrap_or(vec![]);
+                                        let singles = app.tidal_client.media().get_artist_singles(drawable_artist.id, None).await.unwrap_or(vec![]);
 
                                         albums.extend(singles.into_iter());
                                         
@@ -105,7 +108,7 @@ impl App {
                                     tokio::spawn(async move {
                                         let quality = app.get_quality_or_highest_avaliable();
 
-                                        let _ = app.download_manager.enqueue_single(app.clone(), quality, track.get_item()).await;
+                                        let _ = app.download_manager.enqueue_single(app.clone(), quality, track).await;
                                     });
                                 }
                             });
@@ -124,7 +127,7 @@ impl App {
 
                                     tokio::spawn(async move {
                                         let quality = app.get_quality_or_highest_avaliable();
-                                        let _ = app.download_manager.enqueue_album(app.clone(), drawable_album.get_item(), quality).await;
+                                        let _ = app.download_manager.enqueue_album(app.clone(), drawable_album, quality).await;
                                     });
                    
                                 }

@@ -3,15 +3,10 @@ use tidal_rs::model::{Album, Artist, Track};
 
 use crate::{cache::CacheManager, song::Song};
 
-
-
 pub trait Drawable {
     fn get_title(&self) -> String;
 
     fn get_texture(&self) -> ImageSource;
-
-    //this functions exists just for retrocompatibility, it will be removed in the future
-    fn get_item(&self) -> Self;
 }
 
 impl Song {
@@ -35,10 +30,6 @@ impl Drawable for Track {
 
         CacheManager::get_default_cover()
     }
-
-    fn get_item(&self) -> Self {
-        todo!()
-    }
 }
 
 impl Drawable for Song {
@@ -57,9 +48,7 @@ impl Drawable for Song {
         CacheManager::get_default_cover()
     }
 
-    fn get_item(&self) -> Self {
-        self.clone()
-    }
+
 }
 
 impl Drawable for Artist {
@@ -78,9 +67,7 @@ impl Drawable for Artist {
         CacheManager::get_default_cover()
     }
 
-    fn get_item(&self) -> Self {
-        self.clone()
-    }
+
 }
 
 impl Drawable for Album {
@@ -95,7 +82,4 @@ impl Drawable for Album {
             return ImageSource::Uri(url.into());
     }
 
-    fn get_item(&self) -> Self {
-        self.clone()
-    }
 }

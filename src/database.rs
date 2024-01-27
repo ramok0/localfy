@@ -4,14 +4,13 @@ use std::{
     sync::{ Arc, Mutex },
     collections::{hash_map::DefaultHasher, HashMap},
     hash::Hasher,
-    io::{Write, Read, BufRead},
-    ops::Deref, time::Instant,
+    io::BufRead, time::Instant,
 };
 
 use std::hash::Hash;
 
-use flate2::{Compression, bufread::ZlibDecoder};
-use flate2::write::ZlibEncoder;
+
+
 
 use crate::{ song::Song, playlist::Playlist };
 

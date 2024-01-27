@@ -1,7 +1,7 @@
-use std::fmt::Debug;
+
 use std::sync::Arc;
 
-use egui::{Image, Rounding, vec2, Label, RichText, Id, Color32};
+use egui::{Image, Rounding, vec2, Label, RichText, Id};
 
 use crate::app::{App, AppImpl};
 use crate::constants::{TEXT_COLOR, self};

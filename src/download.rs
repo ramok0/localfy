@@ -151,7 +151,7 @@ impl DownloadManager {
     pub async fn enqueue_single(&self, app:Arc<AppImpl>, quality:AudioQuality, track:Track) -> Result<(), tidal_rs::error::Error>
     {
         let caracteres_interdits = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
-        let mut normalize_string = |x:String| -> String {
+        let normalize_string = |x:String| -> String {
                 x.chars()
                 .map(|c| if caracteres_interdits.contains(&c) { '_' } else { c })
                 .collect::<String>()
@@ -255,7 +255,7 @@ impl DownloadManager {
                                         state.downloaded = downloaded as usize;
                                       
                                         //calculer la vitesse
-                                        let elapsed = state.started_at.elapsed();
+                                        let _elapsed = state.started_at.elapsed();
                                         //bytes per second
                                         state.speed = DataRate::new(on_last_second_downloaded.0 as f32 / on_last_second_downloaded.1.elapsed().as_secs_f32());
                                         state.progress = downloaded as f32 / total_size as f32;

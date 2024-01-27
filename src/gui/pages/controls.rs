@@ -1,4 +1,4 @@
-use std::{ ops::Sub, vec };
+use std::ops::Sub;
 
 use egui::{
     Rect,
@@ -20,10 +20,8 @@ use crate::{
     app::App, constants::{
         TEXT_COLOR_SECONDARY,
         TEXT_COLOR,
-        SECONDARY_ACTION_COLOR,
-        SECONDARY_ACTION_COLOR_HOVER,
         SECONDARY_HOVER_COLOR,
-    }, gui::{ helper }, player::PlaybackMode, renderer::Drawable, song::Song
+    }, gui::helper, player::PlaybackMode, renderer::Drawable, song::Song
 };
 
 const CONTROLS_ICONS_DISTANCE: f32 = 30.0;

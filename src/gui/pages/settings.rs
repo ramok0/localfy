@@ -1,8 +1,8 @@
 use std::time::{Duration, Instant};
 
-use egui::{include_image, pos2, text, vec2, Align2, Color32, ComboBox, FontId, Image, Layout, OpenUrl, Pos2, Rect, Rounding, Sense};
-use serde::de;
-use crate::{app::App, constants::WARNING_COLOR, gui::helper};
+use egui::{include_image, pos2, vec2, Align2, Color32, ComboBox, FontId, Image, Layout, OpenUrl, Rect, Rounding, Sense};
+
+use crate::{app::App, constants::WARNING_COLOR};
 
 impl App {
     pub fn draw_settings_page(&mut self, ui:&mut egui::Ui, max_rect:Rect) {

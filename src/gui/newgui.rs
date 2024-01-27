@@ -15,7 +15,7 @@ impl eframe::App for crate::app::App {
                 if cfg!(debug_assertions) {
                     println!("Saving database...");
                 }
-                db.flush();
+                let _ = db.flush();
                 if cfg!(debug_assertions) {
                     println!("Saved");
                 }
@@ -60,7 +60,7 @@ impl eframe::App for crate::app::App {
 
         let mut hasher = DefaultHasher::new();
         songs.hash(&mut hasher);
-        let song_array_hash = hasher.finish();
+        let _song_array_hash = hasher.finish();
 
         // if ctx.input(|i| i.key_released(egui::Key::Space)) {
         //     if self.player.is_playing() {

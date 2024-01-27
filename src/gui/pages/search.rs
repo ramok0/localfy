@@ -1,5 +1,5 @@
 
-use egui::{Rect, Layout, ScrollArea, Image, Vec2, vec2};
+use egui::{Rect, Layout, ScrollArea, Image, vec2};
 use tidal_rs::model::{SearchResult, SearchType};
 use crate::{app::{App}, gui::model::Event, renderer::Drawable};
 use tokio::task;
@@ -24,7 +24,7 @@ impl App {
             let tidal_client = self.app.tidal_client.clone();
             let search_query = self.gui_settings.search_query.clone();
             let tx = self.gui_settings.event_manager.0.clone();
-            let ctx = ui.ctx().clone();
+            let _ctx = ui.ctx().clone();
             self.gui_settings.is_searching = true;
             self.gui_settings.search_results.clear();
             tokio::spawn(async move {

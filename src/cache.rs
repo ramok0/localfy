@@ -1,4 +1,4 @@
-use std::{collections::hash_map::DefaultHasher, fs::File, hash::{Hash, Hasher}, io::Read, path::PathBuf, sync::Arc};
+use std::{collections::hash_map::DefaultHasher, fs::File, hash::{Hash, Hasher}, path::PathBuf, sync::Arc};
 use std::io::Write;
 use egui::{ahash::{HashMap, HashMapExt}, load::Bytes, ImageSource};
 use image::EncodableLayout;

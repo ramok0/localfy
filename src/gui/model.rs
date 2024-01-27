@@ -1,9 +1,9 @@
-use std::{sync::{atomic::AtomicBool, Arc}, hash::{Hash, Hasher}, collections::hash_map::DefaultHasher, time::Instant};
+use std::{time::Instant};
 
-use egui::{ ColorImage, TextureOptions, TextureId };
-use tidal_rs::model::{ self, Album, Artist, DeviceAuth, SearchResult, SearchType, Track };
 
-use crate::cache::CacheManager;
+use tidal_rs::model::{ DeviceAuth, SearchResult, SearchType };
+
+
 use crate::song::Song;
 use super::page::RenderablePage;
 

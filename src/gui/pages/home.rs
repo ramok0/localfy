@@ -1,4 +1,4 @@
-use egui::{vec2, Image, Layout, Rect, ScrollArea, Widget};
+use egui::{Layout, Rect, ScrollArea};
 use crate::{app::App, gui::song::draw_song};
 
 impl App {

@@ -1,5 +1,5 @@
 
-use egui::{Rect, Layout, ScrollArea, Image, vec2};
+use egui::{vec2, Color32, Image, Layout, Rect, Rounding, ScrollArea, Spinner};
 use tidal_rs::model::{SearchResult, SearchType};
 use crate::{app::App, gui::model::Event, renderer::Drawable};
 use tokio::task;
@@ -38,8 +38,8 @@ impl App {
         }
 
         if self.gui_settings.is_searching {
-            ui.vertical_centered(|ui| {
-                ui.heading("Searching...");
+            ui.centered_and_justified(|ui| {
+                ui.add(Spinner::new().size(ui.available_width()/10.0));
             });
         }
 

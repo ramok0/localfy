@@ -1,10 +1,10 @@
-use egui::{vec2, Color32, Image, Layout, ProgressBar, Rect, Rounding, ScrollArea};
-use crate::{app::App, constants::BACKGROUND_COLOR, download::DownloadStatus, renderer::Drawable};
+use egui::{vec2, Align, Color32, Image, Layout, ProgressBar, Rect, RichText, Rounding, ScrollArea};
+use crate::{app::App, constants::{BACKGROUND_COLOR, TEXT_COLOR, TEXT_COLOR_SECONDARY}, download::DownloadStatus, renderer::Drawable};
 
 impl App {
     pub fn draw_downloads_page(&mut self, ui:&mut egui::Ui, max_rect:Rect) {
         let mut ui = ui.child_ui(max_rect, Layout::default());
-
+        
         ui.vertical_centered(|ui| {
             ui.heading("Downloads");
         });
@@ -21,18 +21,29 @@ impl App {
 
         //create padding
         let mut download_ui = ui.child_ui(list_rect, Layout::default());
-        ui.painter().rect_filled(list_rect, Rounding::same(5.), BACKGROUND_COLOR);
+        download_ui.style_mut().spacing.item_spacing.y = 10.0;
 
+        //padding
+        ui.painter().rect_filled(list_rect.expand(15.), Rounding::same(5.), BACKGROUND_COLOR);
         ScrollArea::new([false, true]).show(&mut download_ui, |download_ui: &mut egui::Ui| {
             downloads.iter().for_each(|download| {
                 let res = download_ui.scope(|ui| {
                     ui.horizontal(|ui| {
-                        ui.add(Image::new(download.download.track.get_texture()).rounding(Rounding::same(15.)).fit_to_exact_size(vec2(30., 30.)));
-                        ui.label(format!("{} - {}", download.download.track.title, download.download.track.get_artist().name));
+                        ui.add(Image::new(download.download.track.get_texture()).rounding(Rounding::same(15.)).fit_to_exact_size(vec2(45., 45.)));
+                        ui.label(RichText::new(&download.download.track().title).strong().size(15.).color(TEXT_COLOR));
+                        ui.separator();
+
+                        ui.label(RichText::new(download.download.track().get_artist().name).color(TEXT_COLOR_SECONDARY));
                         
                   //      progress_bar(ui, download.progress, vec2(ui.available_width() - ui.spacing().item_spacing.x, 30.));
 
-                        ui.add(ProgressBar::new(download.progress).animate(true).show_percentage().fill(Color32::from_rgb(0x1b, 0x6f, 0x06)));
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            ui.add(ProgressBar::new(download.progress).animate(true).show_percentage().fill(Color32::from_rgb(0x1b, 0x6f, 0x06)).desired_width(if 300.0 > ui.available_width() {
+                                ui.available_width()
+                            } else {
+                                300.0
+                            }));
+                        });
                     });
                 }).response;
     

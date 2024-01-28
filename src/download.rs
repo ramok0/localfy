@@ -1,10 +1,10 @@
 use std::{sync::{Arc, Mutex}, collections::{VecDeque, HashMap}, time::{Duration, Instant},  path::PathBuf};
 
 use tidal_rs::model::{Track, PlaybackManifest, Album, AudioQuality};
-use tokio::task;
+use tokio::{sync::futures, task};
 use tokio::io::AsyncWriteExt;
-
-use crate::app::AppImpl;
+use futures_util::future::{self, join_all};
+use crate::{app::AppImpl, playlist::{Playlist, PlaylistDescriptor}};
 use crate::song::Song;
 
 #[derive(Clone)]
@@ -12,7 +12,8 @@ pub struct Download {
     pub track:Track,
     pub manifest:PlaybackManifest,
     pub path:PathBuf,
-    pub app:Arc<AppImpl>
+    pub app:Arc<AppImpl>,
+    pub add_to_playlist:Option<Playlist>
 }
 
 #[derive(Clone, PartialEq)]
@@ -22,6 +23,19 @@ pub enum DownloadStatus {
     Downloading,
     Finished,
     Failed(String)
+}
+
+impl DownloadStatus {
+    pub fn is_finished(&self) -> bool {
+        self == &DownloadStatus::Finished
+    }
+
+    pub fn is_failed(&self) -> bool {
+        match self {
+            DownloadStatus::Failed(_) => true,
+            _ => false
+        }
+    }
 }
 
 impl ToString for DownloadStatus {
@@ -71,7 +85,7 @@ pub struct DownloadState {
     pub   speed:DataRate,
     pub    progress:f32,
     pub    status:DownloadStatus,
-    pub started_at:Instant
+    pub started_at:Instant,
 }
 
 impl DownloadState {
@@ -89,14 +103,15 @@ impl DownloadState {
 }
 
 impl Download {
-    pub fn new(app:Arc<AppImpl>, track:Track, manifest:PlaybackManifest, path:Option<PathBuf>) -> Self {
+    pub fn new(app:Arc<AppImpl>, track:Track, manifest:PlaybackManifest, path:Option<PathBuf>, add_to_playlist:Option<Playlist>) -> Self {
         let path = path.expect("Path is required");
 
         Download {
             app,
             track,
             manifest,
-            path 
+            path,
+            add_to_playlist
         }
     }
 
@@ -111,7 +126,16 @@ impl Download {
 
 
     pub fn on_finished(&self) {
-        self.app.database().songs().add_song(Song::new_with_track(self.path.clone(), self.track.clone()));
+        let database = self.app.database();
+        let song = Song::new_with_track(self.path.clone(), self.track.clone());
+        {
+            database.songs().add_song(song.clone());
+        }
+
+        if let Some(playlist) = &self.add_to_playlist {
+            
+            database.playlists().push_to_playlist(&PlaylistDescriptor::from(playlist.clone()), &vec![song]);
+        }
     }
 }
 
@@ -144,13 +168,34 @@ impl DownloadManager {
         self.download_state.lock().unwrap().values().cloned().collect()
     }
 
+    pub fn get_download(&self, track:&Track) -> Option<DownloadState>
+    {
+        self.download_state.lock().unwrap().get(track).cloned()
+    }
+
     pub fn remove_download(&self, download:Download) {
         self.download_queue.lock().unwrap().retain(|x| x.track != download.track);
     }
 
-    pub async fn enqueue_single(&self, app:Arc<AppImpl>, quality:AudioQuality, track:Track) -> Result<(), tidal_rs::error::Error>
+    pub fn downloaded_or_failed(&self, track:&Track) -> Option<Download> {
+        let state = self.download_state.lock().unwrap().get(track).cloned();
+
+        if state.is_none() {
+            return None;
+        }
+
+        let state = state.unwrap();
+        
+        if state.status.is_finished() || state.status.is_failed() {
+            Some(state.download.clone())
+        } else {
+            None
+        }
+    }
+
+    pub async fn enqueue_single(&self, app:Arc<AppImpl>, quality:AudioQuality, track:Track, add_to_playlist:Option<&Playlist>) -> Result<(), tidal_rs::error::Error>
     {
-        let caracteres_interdits = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
+        let caracteres_interdits = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '\'', '.'];
         let normalize_string = |x:String| -> String {
                 x.chars()
                 .map(|c| if caracteres_interdits.contains(&c) { '_' } else { c })
@@ -175,7 +220,8 @@ impl DownloadManager {
 
         let title = track.title.clone();
         let mime_type = manifest.mime_type.clone();
-        let download = Download::new(app.clone(), track, manifest, Some(base_path.join(normalize_string(format!("{}.{}", title.replace("/", "-").replace("\\", "-"), mime_type.get_file_extension())))));
+        let path: PathBuf = base_path.join(format!("{}.{}", normalize_string(title.replace("/", "-").replace("\\", "-")), mime_type.get_file_extension()));
+        let download = Download::new(app.clone(), track, manifest, Some(path), add_to_playlist.cloned());
 
         self.enqueue(download);
 
@@ -186,9 +232,36 @@ impl DownloadManager {
     {
         let tracks = app.tidal_client.media().get_album_tracks(album.id, None).await.unwrap_or(vec![]);
 
-        for track in tracks {
-            self.enqueue_single(app.clone(), quality, track).await?;
+        for track in tracks.clone() {
+            self.enqueue_single(app.clone(), quality, track, None).await?;
         }
+
+        let mut handles = vec![];
+
+
+        for track in tracks {
+            let app = app.clone();
+            handles.push(
+                task::spawn(async move {
+                    loop {
+                        if let Some(result) = app.download_manager.downloaded_or_failed(&track) {
+                            return result;
+                        } else {
+                            tokio::time::sleep(Duration::from_millis(50)).await;
+                        }
+                    }
+                })
+            )
+        }
+
+
+        let tracks = join_all(handles).await.iter()
+            .filter_map(|x| x.as_ref().ok())
+            .map(|x| Song::new_with_track(x.path.clone(), x.track.clone()))
+            .collect::<Vec<_>>();
+
+        app.database().albums().add_album(&album, tracks);
+     
 
         Ok(())
     }

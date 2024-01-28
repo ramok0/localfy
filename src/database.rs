@@ -9,15 +9,32 @@ use std::{
 
 use std::hash::Hash;
 
+use tidal_rs::model::{Album, Track};
 
-
-
-use crate::{ song::Song, playlist::Playlist };
+use crate::{ app::AppImpl, playlist::{DecodedPlaylist, Playlist, PlaylistDescriptor}, song::Song };
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct CachedHashSong {
     pub hash: u64,
     pub song: Song,
+}
+
+#[derive(Clone, Debug, Hash, serde::Serialize, serde::Deserialize)]
+pub struct AlbumHashed {
+    pub album: Album,
+    pub tracks: Vec<u64>,
+}
+
+#[derive(Clone, Debug, Hash, serde::Serialize, serde::Deserialize)]
+pub struct AlbumWithSongs {
+    pub album: Album,
+    pub tracks: Vec<Song>,
+}
+
+impl PartialEq for AlbumHashed {
+    fn eq(&self, other: &Self) -> bool {
+        self.album.id == other.album.id
+    }
 }
 
 impl PartialEq for CachedHashSong {
@@ -44,7 +61,7 @@ impl From<&Song> for CachedHashSong {
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct TrackHashMap(HashMap<u64, Song>);
+pub struct TrackHashMap(pub HashMap<u64, Song>);
 
 impl Hash for TrackHashMap {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -63,9 +80,11 @@ impl Default for TrackHashMap {
 #[derive(Clone, Debug, Hash, serde::Serialize, serde::Deserialize)]
 pub struct DatabaseDataContainer {
     #[serde(default)]
-    tracks: TrackHashMap,
+    pub tracks: TrackHashMap,
     #[serde(default)]
-    playlists: Vec<Playlist>,
+    pub playlists: Vec<Playlist>,
+    #[serde(default)]
+    pub albums: Vec<AlbumHashed>,
 }
 
 
@@ -85,6 +104,7 @@ impl Default for DatabaseDataContainer {
         DatabaseDataContainer {
             tracks: TrackHashMap::default(),
             playlists: Vec::new(),
+            albums: Vec::new()
         }
     }
 }
@@ -117,6 +137,10 @@ impl Database {
         }
     }
 
+    pub fn raw(&self) -> Arc<DatabaseImpl> {
+        self.inner.clone()
+    } 
+
     pub fn last_save_hash(&self) -> u64 {
         self.last_save_hash
     }
@@ -144,15 +168,157 @@ impl Database {
             database: self.inner.clone(),
         }
     }
+
+    pub fn playlists(&self) -> PlaylistController {
+        PlaylistController {
+            database: self.inner.clone(),
+        }
+    }
+
+    pub fn albums(&self) -> AlbumController {
+        AlbumController {
+            database: self.inner.clone(),
+        }
+    }
 }
 
 #[derive(Clone)]
 pub struct DatabaseImpl {
-    data: Arc<Mutex<DatabaseDataContainer>>,
+    pub data: Arc<Mutex<DatabaseDataContainer>>,
 }
 
 pub struct SongController {
     database: Arc<DatabaseImpl>,
+}
+
+pub struct PlaylistController {
+    database: Arc<DatabaseImpl>,
+}
+
+
+
+pub struct AlbumController {
+    database: Arc<DatabaseImpl>,
+}
+
+impl AlbumController {
+    pub fn add_album(&self, album: &Album, tracks:Vec<Song>) {
+        let mut data: std::sync::MutexGuard<'_, DatabaseDataContainer> = self.database.data.lock().unwrap();
+        
+        let hashed_songs = tracks.iter().map(|song| CachedHashSong::from(song).hash).collect::<Vec<u64>>();
+
+        let album_with_tracks = AlbumHashed {
+            album: album.clone(),
+            tracks: hashed_songs,
+        };
+
+        if data.albums.contains(&album_with_tracks) {
+            data.albums.iter_mut().find(|x| x.album.id == album_with_tracks.album.id).unwrap().tracks = album_with_tracks.tracks.clone();
+        } else {
+            data.albums.push(album_with_tracks);
+        }
+    }
+
+    pub fn get_albums(&self, app:Arc<AppImpl>) -> Vec<AlbumWithSongs> {
+        let data = self.database.data
+        .lock()
+        .unwrap();
+
+            data.albums
+            .iter()
+            .map(|album| {
+                AlbumWithSongs { album: album.album.clone(), tracks: album.tracks.iter().filter_map(|item| data.tracks.0.get(&item).cloned()).collect::<Vec<Song>>() }
+            })
+            .collect::<Vec<AlbumWithSongs>>()
+    }
+
+    pub fn get_album_tracks(&self, app:Arc<AppImpl>, album: &Album) -> Vec<Song>
+    {
+        let data = self.database.data
+        .lock()
+        .unwrap();
+
+        let album = data.albums.iter().find(|x| x.album.id == album.id).unwrap();
+        album.tracks.iter().filter_map(|item| data.tracks.0.get(&item).cloned()).collect::<Vec<Song>>()
+    }
+
+    pub fn resolve_album(&self, album:&Album) -> Vec<Song>
+    {
+        let data = self.database.data
+        .lock()
+        .unwrap();
+
+        let album = data.albums.iter().find(|x| x.album.id == album.id).unwrap();
+        album.tracks.iter().filter_map(|item| data.tracks.0.get(&item).cloned()).collect::<Vec<Song>>()
+    }
+
+
+}
+
+impl PlaylistController {
+    pub fn add_playlist(&self, playlist: &Playlist) {
+        let mut data: std::sync::MutexGuard<'_, DatabaseDataContainer> = self.database.data.lock().unwrap();
+
+        data.playlists.push(playlist.clone());
+    }
+
+    pub fn push_to_playlist(&self, playlist: &PlaylistDescriptor, songs: &Vec<Song>) {
+        let mut data: std::sync::MutexGuard<'_, DatabaseDataContainer> = self.database.data.lock().unwrap();
+        if let Some(playlist_index) =  data.playlists.iter().position(|p| p.name == playlist.name) {
+            songs.iter().for_each(|song| {
+                let cached_song = CachedHashSong::from(song);
+                if !data.playlists[playlist_index].songs.contains(&cached_song.hash) {
+                    data.playlists[playlist_index].songs.push(cached_song.hash);
+                }
+            });
+        }
+    }
+
+    pub fn unhash_playlist_songs(&self, descriptor: &PlaylistDescriptor) -> Option<DecodedPlaylist> {
+        let data: std::sync::MutexGuard<'_, DatabaseDataContainer> = self.database.data.lock().unwrap();
+        let playlist = data.playlists.iter().find(|p| p.name == descriptor.name)?;
+        let songs = playlist.songs.iter().filter_map(|item| data.tracks.0.get(&item).cloned()).collect::<Vec<Song>>();
+        
+        Some(DecodedPlaylist {
+            descriptor: descriptor.clone(),
+            songs
+        })
+    }
+
+    pub fn get_playlists(&self) -> Vec<PlaylistDescriptor> {
+        self.database.data
+            .lock()
+            .unwrap()
+            .playlists.iter().map(|playlist| {
+                PlaylistDescriptor {
+                    id: playlist.id.clone(),
+                    name: playlist.name.clone(),
+                    image: None //TODO: impl image
+                }
+            }).collect::<Vec<PlaylistDescriptor>>()
+            .clone()
+    }
+
+    pub fn remove_from_playlist(&self, playlist:&PlaylistDescriptor, song:&Song) {
+        let mut data: std::sync::MutexGuard<'_, DatabaseDataContainer> = self.database.data.lock().unwrap();
+        if let Some(playlist_index) =  data.playlists.iter().position(|p| p.name == playlist.name) {
+            let cached_song = CachedHashSong::from(song);
+            if let Some(song_index) = data.playlists[playlist_index].songs.iter().position(|x| x == &cached_song.hash) {
+                data.playlists[playlist_index].songs.remove(song_index);
+            }
+        }
+    }
+
+    pub fn remove_playlist(&self, playlist: &PlaylistDescriptor) -> Result<(), std::io::Error> {
+        let mut data: std::sync::MutexGuard<'_, DatabaseDataContainer> = self.database.data.lock().unwrap();
+        if let Some(index) = data.playlists.iter().position(|p| p.name == playlist.name) {
+            data.playlists.remove(index);
+        } else {
+            return Err(std::io::Error::new(std::io::ErrorKind::NotFound, "Playlist not found"));
+        }
+
+        Ok(())
+    }
 }
 
 impl SongController {

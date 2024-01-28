@@ -99,6 +99,7 @@ impl App {
             let mut configuration = self.app.configuration.lock().unwrap();
             if ui.add(egui::Slider::new(&mut configuration.max_concurrency, 1..=25)).changed() {
                 configuration.flush();
+                self.gui_settings.should_restart = true;
             }
         });
 

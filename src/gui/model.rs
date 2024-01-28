@@ -4,7 +4,7 @@ use std::{time::Instant};
 use tidal_rs::model::{ Album, Artist, DeviceAuth, SearchResult, SearchType };
 
 
-use crate::{playlist::DecodedPlaylist, song::Song};
+use crate::{playlist::{DecodedPlaylist, Playlist, PlaylistDescriptor}, song::Song};
 use super::page::RenderablePage;
 
 #[derive(PartialEq)]
@@ -14,9 +14,12 @@ pub enum Event {
     DeviceCode(Option<DeviceAuth>),
     LogonWithTidal
 }
-
+#[derive(PartialEq)]
 pub enum Pages {
     Home,
+    Playlist,
+    Artist,
+    Album,
     Search,
     Downloads,
     Settings
@@ -24,11 +27,12 @@ pub enum Pages {
 
 type EventManager = (tokio::sync::mpsc::Sender<Event>, tokio::sync::mpsc::Receiver<Event>);
 
+#[derive(Clone)]
 pub enum UserLocation {
     Home,
-    Playlist(DecodedPlaylist),
-    Artist(Box<dyn RenderablePage>, Artist),
-    Album(Box<dyn RenderablePage>, Album)
+    Playlist(PlaylistDescriptor),
+    Artist(Artist),
+    Album(Album)
 }
 
 pub struct GuiInput {
@@ -43,7 +47,10 @@ pub struct GuiInput {
     pub location:UserLocation,
     pub should_restart:bool,
     pub is_logging_in:bool,
-    pub device_code:Option<DeviceAuth>
+    pub device_code:Option<DeviceAuth>,
+    pub new_playlist_name:String,
+    pub song_name_to_add:String,
+    pub add_songs:Vec<Song>
 }
 
 impl Default for GuiInput {
@@ -60,7 +67,10 @@ impl Default for GuiInput {
             location: UserLocation::Home,
             should_restart: false,
             is_logging_in: false,
-            device_code: None
+            device_code: None,
+            new_playlist_name: String::new(),
+            song_name_to_add: String::new(),
+            add_songs:vec![]
         }
     }
 }

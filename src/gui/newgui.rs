@@ -139,6 +139,9 @@ impl eframe::App for crate::app::App {
                         },
                         Pages::Settings => {
                             self.draw_settings_page(ui, container_rect);
+                        },
+                        _ => {
+                            self.draw_home_page(ui, container_rect);
                         }
                     }
                 };

@@ -1,5 +1,6 @@
 use egui::{Rect, Pos2, Rounding, Vec2, include_image, Image, Sense, vec2};
-use crate::{app::App, constants::BACKGROUND_COLOR, gui::model::Pages};
+use tidal_rs::model::User;
+use crate::{app::App, constants::BACKGROUND_COLOR, gui::model::{Pages, UserLocation}};
 
 const ICONS: usize = 4;
 
@@ -52,6 +53,7 @@ impl App {
 
          if ui.put(positions[0], Image::new(include_image!("../../../assets/home.svg")).sense(Sense::click()).fit_to_exact_size(icon_size)).clicked() {
               self.gui_settings.page = Pages::Home;
+              self.gui_settings.location = UserLocation::Home;
           }
 
           if ui.put(positions[1], Image::new(include_image!("../../../assets/search.svg")).sense(Sense::click()).fit_to_exact_size(icon_size)).clicked() {

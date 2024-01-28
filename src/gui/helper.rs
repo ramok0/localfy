@@ -97,3 +97,9 @@ pub fn croix(ui:&mut egui::Ui, center:Pos2) {
     ui.painter().line_segment([center + Vec2 {x: -5., y: -5.}, center + Vec2 {x: 5., y: 5.}], egui::Stroke::new(1., Color32::GREEN));
     ui.painter().line_segment([center + Vec2 {x: 5., y: -5.}, center + Vec2 {x: -5., y: 5.}], egui::Stroke::new(1., Color32::GREEN));
 }
+//cette fonction sert a simplifier le titre d'une chanson / le nom d'un album / le nom d'un artiste pour pouvoir simplifier la recherche d'album
+pub fn simplify(title: &str) -> String {
+  let lowercase_title = title.to_lowercase();
+
+  lowercase_title
+}

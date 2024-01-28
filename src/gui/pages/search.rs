@@ -1,7 +1,7 @@
 
 use egui::{vec2, Color32, Image, Layout, Rect, Rounding, ScrollArea, Spinner};
 use tidal_rs::model::{SearchResult, SearchType};
-use crate::{app::App, gui::model::Event, renderer::Drawable};
+use crate::{app::App, gui::model::Event, renderer::Drawable, song::Song};
 use tokio::task;
 
 impl App {
@@ -24,10 +24,28 @@ impl App {
             let tidal_client = self.app.tidal_client.clone();
             let search_query = self.gui_settings.search_query.clone();
             let tx = self.gui_settings.event_manager.0.clone();
-            let _ctx = ui.ctx().clone();
             self.gui_settings.is_searching = true;
             self.gui_settings.search_results.clear();
             tokio::spawn(async move {
+
+                if let Ok(id) = search_query.parse::<usize>() {
+                    if let Ok(track) = tidal_client.media().get_track(id).await {
+                        let _ = tx.send(Event::SearchResult(SearchResult {
+                            tracks: vec![track],
+                            ..Default::default()
+                        })).await;
+                        return;
+                    }
+
+                    if let Ok(album) = tidal_client.media().get_album(id).await {
+                        let _ = tx.send(Event::SearchResult(SearchResult {
+                            albums: vec![album],
+                            ..Default::default()
+                        })).await;
+                        return;
+                    }
+                }
+
                 let result: Result<SearchResult, tidal_rs::error::Error> = tidal_client
                     .search()
                     .all(&search_query, Some(20)).await;
@@ -76,11 +94,20 @@ impl App {
 
                 items.into_iter().for_each(|item| {
                     ui.horizontal(|ui| {
-                        ui.add(
+                        let response = ui.add(
                             Image::new(item.get_texture()).fit_to_exact_size(
                                 vec2(35., 35.)
                             )
                         );
+
+                        if self.gui_settings.search_type == SearchType::Track {
+                            let track = item.get_track().unwrap();
+
+                            if let Some(song) = Song::resolve(self.app.clone(), &track) {
+                                song.context_menu(response, ui, &self);
+                            }   
+                        }
+
                         ui.label(item.get_title());
                         if ui.button("Download").clicked() {
                             let app = self.app.clone();
@@ -109,7 +136,7 @@ impl App {
                                 SearchType::Track => {
                                     tokio::spawn(async move {
                                         let quality = app.get_quality_or_highest_avaliable();
-                                        let _ = app.download_manager.enqueue_single(app.clone(), quality, item.get_track().unwrap()).await;
+                                        let _ = app.download_manager.enqueue_single(app.clone(), quality, item.get_track().unwrap(), None).await;
                                     });
                                 },
                                 SearchType::Album => {

@@ -198,7 +198,7 @@ impl PlayerImpl {
                     };
 
                     if song.is_some() {
-                        //let _ = self.set_media(song.as_ref().unwrap(), false);
+                        let _ = self.set_media(song.as_ref().unwrap());
                     }
                 },
                 _ => {}

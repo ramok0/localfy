@@ -57,6 +57,7 @@ impl PlayerQueue {
 
         //when playlist change, shuffle positions should change too.
         self.generate_shuffle_positions();
+
     }
 
     pub fn get_playlist(&self) -> &Vec<Song> {
@@ -197,7 +198,7 @@ impl PlayerImpl {
                     };
 
                     if song.is_some() {
-                        let _ = self.set_media(song.as_ref().unwrap(), false);
+                        //let _ = self.set_media(song.as_ref().unwrap(), false);
                     }
                 },
                 _ => {}
@@ -234,7 +235,7 @@ impl PlayerImpl {
         };
 
         if previous_song.is_some() {
-            let _ = self.set_media(previous_song.as_ref().unwrap(), false);
+            let _ = self.set_media(previous_song.as_ref().unwrap());
         }
     }
 
@@ -244,7 +245,7 @@ impl PlayerImpl {
         };
 
         if next_song.is_some() {
-            let _ = self.set_media(next_song.as_ref().unwrap(), false);
+            let _ = self.set_media(next_song.as_ref().unwrap());
         }
     }
 
@@ -303,16 +304,11 @@ impl PlayerImpl {
         Ok(())
     }
 
-    pub fn set_media(&self, song:&Song, override_index:bool) -> Result<(), tidal_rs::error::Error>{
+    pub fn set_media(&self, song:&Song) -> Result<(), tidal_rs::error::Error>{
         self.play_song(&song)?;
-        {   
 
-             if override_index {
-                 let mut queue = self.queue();
-             queue.current_index = queue.playlist.iter().position(|x| x == song);
-             }
+        self.queue().set_current_media(Some(&song));
 
-        }
         //self.queue()().set_playlist(&vec![song.clone()]);
         //self.queue()().set_current_media(song);
 

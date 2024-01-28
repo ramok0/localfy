@@ -78,7 +78,7 @@ pub fn centerer(ui: &mut Ui, hash:impl Hash, add_contents: impl FnOnce(&mut Ui))
   }
 
   pub fn scope_click<R>(ui:&mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui) -> R) -> InnerResponse<R> {
-    scope_dyn_click(ui, Box::new(add_contents), Id::new("child"))
+    scope_dyn_click(ui, Box::new(add_contents), ui.next_auto_id())
 }
 
 fn scope_dyn_click<'c, R>(

@@ -1,10 +1,10 @@
 use std::{time::Instant};
 
 
-use tidal_rs::model::{ DeviceAuth, SearchResult, SearchType };
+use tidal_rs::model::{ Album, Artist, DeviceAuth, SearchResult, SearchType };
 
 
-use crate::song::Song;
+use crate::{playlist::DecodedPlaylist, song::Song};
 use super::page::RenderablePage;
 
 #[derive(PartialEq)]
@@ -26,9 +26,9 @@ type EventManager = (tokio::sync::mpsc::Sender<Event>, tokio::sync::mpsc::Receiv
 
 pub enum UserLocation {
     Home,
-    Playlist(Box<dyn RenderablePage>),
-    Artist(Box<dyn RenderablePage>),
-    Album(Box<dyn RenderablePage>)
+    Playlist(DecodedPlaylist),
+    Artist(Box<dyn RenderablePage>, Artist),
+    Album(Box<dyn RenderablePage>, Album)
 }
 
 pub struct GuiInput {

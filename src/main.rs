@@ -1,5 +1,7 @@
+use std::vec;
+
 use app::App;
-use egui::Color32;
+use egui::{Color32, FontData};
 use tidal_rs::client::TidalApi;
 
 pub mod app;
@@ -57,6 +59,12 @@ async fn main() -> Result<(), eframe::Error> {
             });
 
             egui_extras::install_image_loaders(&cc.egui_ctx);
+
+            let mut fonts = egui::FontDefinitions::default();
+            fonts.font_data.insert("Montserrat".to_owned(), FontData::from_static(include_bytes!("../assets/fonts/Montserrat-ExtraBold.otf")));
+            fonts.families.insert(egui::FontFamily::Name("Montserrat".into()), vec!["Montserrat".to_owned()]);
+
+            cc.egui_ctx.set_fonts(fonts);
 
             Box::<crate::app::App>::new(App::new(tidal_api, configuration))
         }),

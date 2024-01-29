@@ -3048,6 +3048,7 @@ dependencies = [
 [[package]]
 name = "tidal_rs"
 version = "0.1.0"
+source = "git+https://github.com/ramok0/tidal-rs.git#1a17a524e2f369498b0635300aa1ade9933b789c"
 dependencies = [
  "async-recursion",
  "base64",

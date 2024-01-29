@@ -75,10 +75,10 @@ impl RenderablePage for PlaylistDescriptor {
         };
 
         if let Some(resolved_playlist) = songs {
-            egui::ScrollArea::new([false, true]).show(&mut container, |download_ui: &mut egui::Ui| {
+            egui::ScrollArea::new([false, true]).show(&mut container, |container: &mut egui::Ui| {
             
                 resolved_playlist.songs.iter().for_each(|song| {
-                    let response = download_ui.add(SongWidget::new(song.clone()));
+                    let response = container.add(SongWidget::new(song.clone()));
 
                     if response.clicked() {
                         song.on_clicked(application.app.clone(), crate::gui::model::UserLocation::Playlist(resolved_playlist.descriptor.clone()));

@@ -203,7 +203,7 @@ impl DownloadManager {
         };
 
         let manifest = app.tidal_client.media().get_highest_quality_avaliable_stream_url(track.id, quality).await?;
-        let mut base_path = app.configuration.lock().unwrap().get_base_download_folder().join(track.get_artist().name);
+        let mut base_path = app.configuration.lock().unwrap().get_base_download_folder().join(normalize_string(track.get_artist().name));
 
         if track.album.is_some() {
             let album_name = track.album.as_ref().unwrap().title.clone();
